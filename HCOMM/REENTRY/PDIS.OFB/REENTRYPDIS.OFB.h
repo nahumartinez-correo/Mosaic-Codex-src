@@ -1,0 +1,5 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\commdef.h"
+#include "hcomm.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\base.h"
+#include "C:\MOA\src\include\ofb\cdserdef.h"

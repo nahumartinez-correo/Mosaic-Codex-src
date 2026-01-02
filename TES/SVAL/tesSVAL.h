@@ -1,0 +1,15 @@
+#include "tlr.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\base.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include <ofbdefs.h>       
+#include "C:\moaproj\V47.10\src\INCLUDE\tesoro.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\cuentas.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\Hcommstd.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\giros.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\impresio.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\Hcommstd.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\pickdrv.h"
+#define MAX_DEN 14
+#define MENSAJES_CIERRE "SI"

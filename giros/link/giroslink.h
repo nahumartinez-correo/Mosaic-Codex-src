@@ -1,0 +1,7 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\csr.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\pickdrv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\Hcommstd.h"
+#include "hcomm.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\giros.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\descuento.h"

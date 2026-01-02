@@ -1,0 +1,6 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\keys.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\MOA\src\include\ofb\cdserdef.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\impresio.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\csr.h"

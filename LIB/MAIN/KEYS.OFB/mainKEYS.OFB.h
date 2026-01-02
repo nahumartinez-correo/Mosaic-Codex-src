@@ -1,0 +1,5 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "lib.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\keys.h"
+#include "C:\MOA\src\include\ofb\desktop.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\giros.h"

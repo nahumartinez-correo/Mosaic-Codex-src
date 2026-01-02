@@ -1,0 +1,7 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\color.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\base.h"
+#include "C:\MOA\src\include\ofb\desktop.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\giros.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\sucuvirt.h"

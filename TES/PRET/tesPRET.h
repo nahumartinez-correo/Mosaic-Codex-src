@@ -1,0 +1,6 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\Hcommstd.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\pickdrv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\tesoro.h"
+#define MENSAJES_CIERRE "SI"

@@ -1,0 +1,6 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\base.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#define MENSAJES_CIERRE "SI"
+#include "C:\moaproj\V47.10\src\INCLUDE\giros.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\Hcommstd.h"

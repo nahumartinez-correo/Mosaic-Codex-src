@@ -1,0 +1,6 @@
+#include "C:\MOA\src\include\ofb\desktop.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\gsp.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\csr.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\giros.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\reporte.h"

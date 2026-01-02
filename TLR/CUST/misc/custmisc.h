@@ -1,0 +1,8 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\gsp.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\keys.h"
+#include "tlr.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\giros.h"
+#define TRUE 1
+#define FALSE 0

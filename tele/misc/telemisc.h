@@ -1,0 +1,13 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\keys.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\presupuesto.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\impresio.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\tesoro.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\csr.h"
+#include 	    "pickdrv.h"
+#include 		"presupuesto.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\bonif.h"
+# define    SETEODOC         "\x1bc0\x04"
+# define    NEWLINE          "\n"
+#undef TOTAL

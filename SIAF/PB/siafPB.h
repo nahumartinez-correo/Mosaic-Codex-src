@@ -1,0 +1,8 @@
+#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\drv.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\presupuesto.h"
+# include       "base.h"
+# include       "cdserdef.h"
+# include       "gsp.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\impresio.h"
+#include "C:\moaproj\V47.10\src\INCLUDE\csr.h" 
