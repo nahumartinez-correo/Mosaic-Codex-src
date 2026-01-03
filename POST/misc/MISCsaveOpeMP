@@ -149,6 +149,9 @@ SUB post:MISCsaveOpeMP(p_operacion,p_comando)
 			//Cargo la info de la Orden
 			CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_order,LST:post:LISTget_opmp_order) 
 			CALL csr:proc_list(F_APPEND,DSC:post:OperacionesMP_ctx ,LST:post:LISTget_opmp_order,2)  
+			//Cargo la info del Refund Smart Point
+			CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_refund,LST:post:LISTget_opmp_refund) 
+			CALL csr:proc_list(F_APPEND,DSC:post:OperacionesMP_ctx ,LST:post:LISTget_opmp_refund,2)  
 		BREAK
 		CASE "QR_REFUND_POST"
 			//Cargo la info de la Orden	

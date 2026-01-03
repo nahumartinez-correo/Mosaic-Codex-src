@@ -4,11 +4,11 @@
 * DESCRIPCION
 *   Lista de campos de respuesta de consulta de los Web Services de Mercado Pago
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   
 * DOCUMENTACION
@@ -24,6 +24,11 @@ LIST post:LISTget_opmp_refund
 	MEMBER post:adt_opmp_ref_amount
 	MEMBER post:adt_opmp_ref_status
 	MEMBER post:adt_opmp_ref_pay_id
+	MEMBER post:adt_opmp_ref_id_PS
+	MEMBER post:adt_opmp_ref_st_PS
+	MEMBER post:adt_opmp_ref_pay_PS
+	MEMBER post:adt_opmp_ord_st_PS
+	MEMBER post:adt_opmp_st_det_PS
 
 END LIST
 

@@ -7184,6 +7184,11 @@ mp_refund_id NUMERIC 20 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0                   // 
 mp_refund_amount ASCII 12 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0								 // Monto *100 El monto que se le va a devolver al cliente 
 mp_refund_status  ASCII 20 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0	               // Estado de la Devolucion
 mp_refund_payment_id NUMERIC 20 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0           // ID del pago
+mp_refund_id_PS ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                   // ID de la Devolucion Smart Point
+mp_refund_status_PS ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Estado de la Devolucion Smart Point
+mp_refund_pay_id_PS ASCII 16 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Referencia de pago Smart Point
+mp_order_status_PS ASCII 15 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Estado de la orden Smart Point
+mp_status_detail_PS ASCII 30 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Detalle de estado Smart Point
 
 mp_caller_id NUMERIC 10 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0                   // ID de la Cuenta de Mercado Pago 
 mp_poi ASCII 40 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                           // ID del dispositivo Point
@@ -7213,6 +7218,11 @@ adt_opmp_ref_amount ASCII 12 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0							 // Monto 
 adt_opmp_ref_status  ASCII 20 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0	           // Estado de la Devolucion
 adt_opmp_ref_pay_id NUMERIC 20 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0            // ID del pago
 adt_opmp_ref_date ASCII 35 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Fecha creacion de la devolucion Date(ISO_8601)
+adt_opmp_ref_id_PS ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // ID de la Devolucion Smart Point
+adt_opmp_ref_st_PS ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Estado de la Devolucion Smart Point
+adt_opmp_ref_pay_PS ASCII 16 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0               // Referencia de pago Smart Point
+adt_opmp_ord_st_PS ASCII 15 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Estado de la orden Smart Point
+adt_opmp_st_det_PS ASCII 30 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                // Detalle de estado Smart Point
 
 adt_opmp_resp_code ASCII 20 1 ~ SCDEAscurDmpbdha 0 0 0 0 0 0 OFB:siaf:DUREpipe  // Codigo de Respuesta del HOST de Mercado Pago
 adt_opmp_resp_status ASCII 20 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0	  		        // Estado devuelto del HOST de Mercado Pago
