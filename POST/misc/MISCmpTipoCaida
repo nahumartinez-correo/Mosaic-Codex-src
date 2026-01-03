@@ -4,12 +4,12 @@
 * DESCRIPCION
 *   Realiza la verificacion por caida de RT en las operaciones VPI
 * ENTRADAS
-*   p_operacion: ANV - Anulaci髇 de venta 
-*								 DEV - Devoluci髇 
+*   p_operacion: ANV - Anulaci贸n de venta 
+*								 DEV - Devoluci贸n 
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber醤 ser analizados al modificar el objeto actual
+*   Otros objetos que deber谩n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *  op:TRANlogin
 * DOCUMENTACION
@@ -70,15 +70,15 @@ SUB post:MISCmpTipoCaida(p_operacion)
 	//Cargo el codigo de la transaccion
 	SELECT (l_operacion)
 		CASE "VEN"
-			//Anulaci髇 de venta con presupuesto
+			//Anulaci贸n de venta con presupuesto
 			LET siaf:codigo_siaf = 99601		
 		BREAK
 		CASE "DEV"
 			IF (post:adt_opmp_cod_siaf == 99601) THEN
-				//Anulaci髇 de venta con presupuesto
+				//Anulaci贸n de venta con presupuesto
 				LET siaf:codigo_siaf = 99601	
 			ELSE
-				//Anulaci髇 de venta
+				//Anulaci贸n de venta
 				LET siaf:codigo_siaf = 99600
 				LET giros:PresNro_canc = post:adt_opmp_PresNro
 			END IF	
@@ -199,19 +199,37 @@ SUB post:MISCmpTipoCaida(p_operacion)
 			//Resguardo la lista
 			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order) 
 			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_payment,LST:post:LISTset_opmp_payment)
+			//Smart Point: cargo datos locales del refund sin usar consultas 200010
+			CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_refund,LST:post:LISTget_opmp_refund)
 		END IF	
 		
-		CALL post:MISCmpGetRefund
-		IF (RETVAL < 0) THEN
-			RETURN -2
-		END IF
-		
-		//Si no se aprobo la devolucion
-		IF (post:mp_refund_id.NUMCHARS == 0 && post:mp_refund_status != "approved") THEN
-			//Actualizo la marca en la tabla OperacionesMP
-			CALL post:CDSopmp_jnlFallo("VEN")
+		IF (post:adt_opmp_codint_mp == "QRI") THEN
+			CALL post:MISCmpGetRefund
+			IF (RETVAL < 0) THEN
+				RETURN -2
+			END IF
 			
-			RETURN -2
+			//Si no se aprobo la devolucion
+			IF (post:mp_refund_id.NUMCHARS == 0 && post:mp_refund_status != "approved") THEN
+				//Actualizo la marca en la tabla OperacionesMP
+				CALL post:CDSopmp_jnlFallo("VEN")
+				
+				RETURN -2
+			END IF
+		ELSE
+			//Smart Point: valido con la info local y la respuesta 200025 previa
+			IF (post:mp_refund_status.NUMCHARS == 0) THEN
+				LET post:mp_refund_status = post:mp_refund_status_PS
+			END IF
+			IF (post:mp_refund_id.NUMCHARS == 0) THEN
+				LET post:mp_refund_id = post:mp_refund_id_PS
+			END IF
+			IF (post:mp_refund_id_PS.NUMCHARS == 0 && post:mp_refund_status != "processed") THEN
+				//Actualizo la marca en la tabla OperacionesMP
+				CALL post:CDSopmp_jnlFallo("VEN")
+				
+				RETURN -2
+			END IF
 		END IF
 
 		//Busco los datos en el journal
@@ -314,15 +332,15 @@ SUB post:MISCmpTipoCaida(p_operacion)
 	//Cargo el codigo de la transaccion
 	SELECT (l_operacion)
 		CASE "VEN"
-			//Anulaci髇 de venta con presupuesto
+			//Anulaci贸n de venta con presupuesto
 			LET siaf:codigo_siaf = 99601		
 		BREAK
 		CASE "DEV"
 			IF (post:adt_opmp_cod_siaf == 99601) THEN
-				//Anulaci髇 de venta con presupuesto
+				//Anulaci贸n de venta con presupuesto
 				LET siaf:codigo_siaf = 99601	
 			ELSE
-				//Anulaci髇 de venta
+				//Anulaci贸n de venta
 				LET siaf:codigo_siaf = 99600	
 			END IF	
 		BREAK
