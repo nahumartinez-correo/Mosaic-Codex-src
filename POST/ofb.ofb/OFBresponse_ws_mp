@@ -284,24 +284,33 @@ SUB post:OFBresponse_ws_mp
 		BREAK
 
 		CASE 200025
-			//POINT Integrado - Reembolso de un Pago   
-			post:mp_response = SUBSTR(post:mp_tmp_adic[0],0,10)
+			//POINT Integrado - Reembolso de un Pago (nuevo layout Smart Point)
+			post:mp_response = SUBSTR(post:mp_tmp_adic[0],0,4)
 			CALL post:MISCFtrim(post:mp_response)
 			
 			IF (post:mp_response == 200 || post:mp_response == 201) THEN
-				post:mp_refund_status = SUBSTR(post:mp_tmp_adic[0],10,20)
-				
-				post:mp_refund_id = SUBSTR(post:mp_tmp_adic[1],0,20)
-								
-				post:mp_refund_amount = SUBSTR(post:mp_tmp_adic[2],0,10)
-				post:mp_refund_date = SUBSTR(post:mp_tmp_adic[3],0,35)
-				
-				post:mp_refund_payment_id = SUBSTR(post:mp_tmp_adic[4],0,20)
+				post:mp_order_id_PS = SUBSTR(post:mp_tmp_adic[0],4,32)
+				post:mp_refund_id_PS = SUBSTR(post:mp_tmp_adic[0],36,32)
+				post:mp_refund_status_PS = SUBSTR(post:mp_tmp_adic[0],68,32)
 
+				post:mp_refund_pay_id_PS = SUBSTR(post:mp_tmp_adic[1],0,16)
+				post:mp_order_status_PS = SUBSTR(post:mp_tmp_adic[1],16,15)
+				post:mp_status_detail_PS = SUBSTR(post:mp_tmp_adic[1],31,30)
+
+				//Compatibilidad con variables comunes
+				post:mp_refund_status = post:mp_refund_status_PS
+				post:mp_refund_payment_id = post:mp_refund_pay_id_PS
+				CLEARFIELD post:mp_refund_id
+				CLEARFIELD post:mp_refund_amount
+				CLEARFIELD post:mp_refund_date
+
+				CALL post:MISCFtrim(post:mp_order_id_PS)
+				CALL post:MISCFtrim(post:mp_refund_id_PS)
+				CALL post:MISCFtrim(post:mp_refund_status_PS)
+				CALL post:MISCFtrim(post:mp_refund_pay_id_PS)
+				CALL post:MISCFtrim(post:mp_order_status_PS)
+				CALL post:MISCFtrim(post:mp_status_detail_PS)
 				CALL post:MISCFtrim(post:mp_refund_status)
-				CALL post:MISCFtrim(post:mp_refund_id)
-				CALL post:MISCFtrim(post:mp_refund_amount)
-				CALL post:MISCFtrim(post:mp_refund_date)
 				CALL post:MISCFtrim(post:mp_refund_payment_id)
 			ELSE
 				//Capturo los datos del error
