@@ -29,6 +29,28 @@ SUB post:SVAL99600_mpago
 	ELSE
 		l_es_point = 1
 	END IF
+
+	//Smart Point: completo los datos del pago original desde tablas locales para evitar consultas 200010
+	IF (l_es_point) THEN
+		IF (post:mp_order_id_PS.NUMCHARS == 0 && post:adt_opmp_order_id_PS.NUMCHARS > 0) THEN
+			LET post:mp_order_id_PS = post:adt_opmp_order_id_PS
+		END IF
+		IF (post:mp_order_id.NUMCHARS == 0 && post:adt_opmp_order_id > 0) THEN
+			LET post:mp_order_id = post:adt_opmp_order_id
+		END IF
+		IF (post:mp_payment_id_PS.NUMCHARS == 0 && post:adt_opmp_pay_id_PS.NUMCHARS > 0) THEN
+			LET post:mp_payment_id_PS = post:adt_opmp_pay_id_PS
+		END IF
+		IF (post:mp_payment_id == 0 && post:adt_opmp_payment_id != 0) THEN
+			LET post:mp_payment_id = post:adt_opmp_payment_id
+		END IF
+		IF (post:mp_auth_code.NUMCHARS == 0 && post:adt_opmp_auth_code.NUMCHARS > 0) THEN
+			LET post:mp_auth_code = post:adt_opmp_auth_code
+		END IF
+		IF (post:mp_amount.NUMCHARS == 0 && post:adt_opmp_amount.NUMCHARS > 0) THEN
+			LET post:mp_amount = post:adt_opmp_amount
+		END IF
+	END IF
 	
 	//Determino status a mostrar/validar segun canal
 	IF (l_es_point) THEN
@@ -44,23 +66,9 @@ SUB post:SVAL99600_mpago
 		l_status_esperado = "approved"
 	END IF
 
-	//Consulto el estado del pago
-	CALL post:MISCmpGetRefund
-	IF (RETVAL == 0) THEN
-		IF (l_es_point) THEN
-			l_status_refund = post:mp_refund_status_PS
-			IF (l_status_refund == "")
-				l_status_refund = post:mp_refund_status
-			END IF
-			l_refund_id = post:mp_refund_id_PS
-			l_status_esperado = "processed"
-		ELSE
-			l_status_refund = post:mp_refund_status
-			l_refund_id = post:mp_refund_id
-			l_status_esperado = "approved"
-		END IF
+	IF (l_es_point) THEN
+		//Smart Point: se evita la consulta 200010 y se envia directamente el refund 200025
 		IF (l_refund_id == "" && l_status_refund == "") THEN
-			//Hago la devolucion
 			CALL post:MISCmpRefundPayment
 			IF (l_es_point) THEN
 				l_status_refund = post:mp_refund_status_PS
@@ -79,25 +87,64 @@ SUB post:SVAL99600_mpago
 					FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
 					MSGBOX l_mensaje,OFB_OK,"ERROR"
 					RETURN -2
-			ELSE
-				//Consulto el estado del pago
-				CALL post:MISCmpGetRefund
-				IF (RETVAL < 0)
-					FPRINT l_mensaje ,"NO SE PUDO OBTENER LOS DATOS DEL PAGO\n STATUS [%s]", l_status_refund
-					MSGBOX l_mensaje,OFB_OK,"ERROR"
-				END IF
-			END IF
-		ELSE
-			IF (l_status_refund != l_status_esperado) THEN
-				FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
-				MSGBOX l_mensaje,OFB_OK,"ERROR"
-				RETURN -2
 			END IF
 		END IF
 	ELSE
-		FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
-		MSGBOX l_mensaje,OFB_OK,"ERROR"
-		RETURN -2
+		//Flujo QR: mantiene consultas 200010
+		CALL post:MISCmpGetRefund
+		IF (RETVAL == 0) THEN
+			IF (l_es_point) THEN
+				l_status_refund = post:mp_refund_status_PS
+				IF (l_status_refund == "")
+					l_status_refund = post:mp_refund_status
+				END IF
+				l_refund_id = post:mp_refund_id_PS
+				l_status_esperado = "processed"
+			ELSE
+				l_status_refund = post:mp_refund_status
+				l_refund_id = post:mp_refund_id
+				l_status_esperado = "approved"
+			END IF
+			IF (l_refund_id == "" && l_status_refund == "") THEN
+				//Hago la devolucion
+				CALL post:MISCmpRefundPayment
+				IF (l_es_point) THEN
+					l_status_refund = post:mp_refund_status_PS
+					IF (l_status_refund == "")
+						l_status_refund = post:mp_refund_status
+					END IF
+				ELSE
+					l_status_refund = post:mp_refund_status
+				END IF
+				IF (RETVAL < 0) THEN
+					FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
+					MSGBOX l_mensaje,OFB_OK,"ERROR"
+					RETURN -2
+				END IF
+				IF (l_status_refund != l_status_esperado) THEN
+						FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
+						MSGBOX l_mensaje,OFB_OK,"ERROR"
+						RETURN -2
+				ELSE
+					//Consulto el estado del pago
+					CALL post:MISCmpGetRefund
+					IF (RETVAL < 0)
+						FPRINT l_mensaje ,"NO SE PUDO OBTENER LOS DATOS DEL PAGO\n STATUS [%s]", l_status_refund
+						MSGBOX l_mensaje,OFB_OK,"ERROR"
+					END IF
+				END IF
+			ELSE
+				IF (l_status_refund != l_status_esperado) THEN
+					FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
+					MSGBOX l_mensaje,OFB_OK,"ERROR"
+					RETURN -2
+				END IF
+			END IF
+		ELSE
+			FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
+			MSGBOX l_mensaje,OFB_OK,"ERROR"
+			RETURN -2
+		END IF
 	END IF
 	
 	IF (l_es_point) THEN

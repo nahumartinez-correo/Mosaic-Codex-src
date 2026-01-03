@@ -4,11 +4,11 @@
 * DESCRIPCION
 *   Obtiene una Devolucion de un Pago de Mercado Pago
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   
 * DOCUMENTACION
@@ -19,6 +19,7 @@
 SUB post:MISCmpGetRefund
 	LOCAL l_retval LIKE lib:err_retval
 
+	//Smart Point (POINT_REFUND_POST/200025) ya no depende de la consulta 200010; esta rutina queda para QR u otros flujos que la requieran.
 	IF (post:mp_codint_mp == "QRI" ) THEN
 		LET post:mp_comandos = "QR_REFUND_GET"
 	ELSE
