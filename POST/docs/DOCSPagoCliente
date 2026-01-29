@@ -1,22 +1,22 @@
-/****o* Pendientes de agrupaciï¿½n/OFB:post:DOCSPagoCliente
+/****o* Pendientes de agrupación/OFB:post:DOCSPagoCliente
 * NOMBRE
 *   OFB:post:DOCSPagoCliente
 * DESCRIPCION
 *   Comportamiento del objeto (obligatorio)
 * ENTRADAS
-*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
+*   Otros objetos que deberán ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   Documentaciï¿½n relevante que deberï¿½ ser actualizada por la modificaciï¿½n de la rutina
+*   Documentación relevante que deberá ser actualizada por la modificación de la rutina
 * SOURCE
 */
 #include "postdocs.h"
-#include "C:\moaproj\V47.10\src\INCLUDE\Sap.h"
+#include "sap.h"
 
 SUB post:DOCSPagoCliente
 

@@ -24,11 +24,12 @@ SUB post:CDSselModif_stockp
 
     LOCAL fecvto    LIKE post:adt_stockp_vtofecha
     LOCAL baja      LIKE post:adt_stockp_Baja
-	LOCAL entrega_f LIKE post:adt_stockp_entrega_f
-	LOCAL crem_imp  LIKE post:adt_stockp_crem_imp
-	LOCAL destino	LIKE post:adt_stockp_destino
-	local loc_mensaje LIKE common:csr_string
-	local ctaOM 	LIKE post:adt_stockp_ctaOM
+		LOCAL entrega_f LIKE post:adt_stockp_entrega_f
+		LOCAL crem_imp  LIKE post:adt_stockp_crem_imp
+		LOCAL destino	LIKE post:adt_stockp_destino
+		local loc_mensaje LIKE common:csr_string
+		local ctaOM 	LIKE post:adt_stockp_ctaOM
+		local rppCorp LIKE post:adt_stockp_rpp_corp
 
 	CDS SELECT FROM DSC:stockp_tbl BECOMES DSC:stockp_ctx \
 	WHERE post:adt_stockp_pieza == post:Pieza 
@@ -55,7 +56,15 @@ SUB post:CDSselModif_stockp
 	post:adt_stockp_crem_imp INTO crem_imp \
 	post:adt_stockp_entrega_f INTO entrega_f \
 	post:adt_stockp_destino INTO destino \
-	post:adt_stockp_ctaOM INTO ctaOM
+	post:adt_stockp_ctaOM INTO ctaOM \
+	post:adt_stockp_rpp_reg INTO rppCorp
+	
+	
+	if (rppCorp == "S" && post:stockp_rpp_corp == "S") then
+		//Si a la pieza ya se le hizo el REGISTRO RPP DE CONTROL no se le puede cambiar la marca a "S" de PIEZA RPP CORPO 
+		msgbox "La pieza ya ha sido registrada como RPP CON CONTROL. No podrá modificarse a RPP CORP.",0x00,"Error"
+		RETVAL = -2
+	end if
 	
 	if (baja == "S" && crem_imp == 0) then
 		//Si la pieza esta dada de baja y NO es crem no puede modificarse

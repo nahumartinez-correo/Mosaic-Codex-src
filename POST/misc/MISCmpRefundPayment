@@ -4,11 +4,11 @@
 * DESCRIPCION
 *   Realiza la Devolucion de un Pago de Mercado Pago - POINT / QR Integrado
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   ParÃ¡metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberÃ¡n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   
 * DOCUMENTACION
@@ -23,6 +23,26 @@ SUB post:MISCmpRefundPayment
 		LET post:mp_comandos = "QR_REFUND_POST"
 	ELSE
 		LET post:mp_comandos = "POINT_REFUND_POST"
+
+		//Smart Point: completo datos locales de la venta original antes de enviar el refund 200025
+		IF (post:mp_order_id_PS.NUMCHARS == 0 && post:adt_opmp_order_id_PS.NUMCHARS > 0) THEN
+			LET post:mp_order_id_PS = post:adt_opmp_order_id_PS
+		END IF
+		IF (post:mp_order_id.NUMCHARS == 0 && post:adt_opmp_order_id > 0) THEN
+			LET post:mp_order_id = post:adt_opmp_order_id
+		END IF
+		IF (post:mp_payment_id_PS.NUMCHARS == 0 && post:adt_opmp_pay_id_PS.NUMCHARS > 0) THEN
+			LET post:mp_payment_id_PS = post:adt_opmp_pay_id_PS
+		END IF
+		IF (post:mp_payment_id == 0 && post:adt_opmp_payment_id != 0) THEN
+			LET post:mp_payment_id = post:adt_opmp_payment_id
+		END IF
+		IF (post:mp_auth_code.NUMCHARS == 0 && post:adt_opmp_auth_code.NUMCHARS > 0) THEN
+			LET post:mp_auth_code = post:adt_opmp_auth_code
+		END IF
+		IF (post:mp_amount.NUMCHARS == 0 && post:adt_opmp_amount.NUMCHARS > 0) THEN
+			LET post:mp_amount = post:adt_opmp_amount
+		END IF
 	END IF
 	
 	LET post:mp_operacion = "DEV"
@@ -51,6 +71,25 @@ SUB post:MISCmpRefundPayment
 		DPRINT "post:mp_refund_date[%s]\n" post:mp_refund_date
 		DPRINT "post:mp_refund_payment_id[%s]\n" post:mp_refund_payment_id
 		
+		IF (post:mp_codint_mp != "QRI") THEN
+			//Compatibilidad de datos cuando la respuesta 200025 no informa todos los campos
+			IF (post:mp_refund_id.NUMCHARS == 0) THEN
+				LET post:mp_refund_id = post:mp_refund_id_PS
+			END IF
+			IF (post:mp_refund_status.NUMCHARS == 0) THEN
+				LET post:mp_refund_status = post:mp_refund_status_PS
+			END IF
+			IF (post:mp_refund_payment_id.NUMCHARS == 0) THEN
+				LET post:mp_refund_payment_id = post:mp_refund_pay_id_PS
+			END IF
+			IF (post:mp_refund_amount.NUMCHARS == 0 && post:adt_opmp_amount.NUMCHARS > 0) THEN
+				LET post:mp_refund_amount = post:adt_opmp_amount
+			END IF
+			IF (post:mp_refund_date.NUMCHARS == 0) THEN
+				LET post:mp_refund_date = common:system_date
+			END IF
+		END IF
+
 		LET l_retval = 0
 		
 		//Grabo en la tabla OperacionesMP

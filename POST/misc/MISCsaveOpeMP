@@ -16,7 +16,7 @@
 *   NI50546 - Mercado Pago
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\misc\postmisc.h"
+#include "postmisc.h"
 
 SUB post:MISCsaveOpeMP(p_operacion,p_comando)
 	LOCAL l_retval LIKE lib:err_retval
@@ -31,13 +31,21 @@ SUB post:MISCsaveOpeMP(p_operacion,p_comando)
 	LET post:mp_codint_mp = post:adt_tmp_codint_mp
 
 	IF (siaf:codigo_siaf == 99600) THEN
-		LET l_pres_nro = giros:PresNro_canc
+		IF (giros:PresNro_canc == 0) THEN
+			LET l_pres_nro = post:adt_opmp_PresNro
+		ELSE  
+			LET l_pres_nro = giros:PresNro_canc
+		END IF
 	ELSE
-		LET l_pres_nro = post:PresNro
+		IF (post:PresNro == 0) THEN
+			LET l_pres_nro = post:adt_opmp_PresNro
+		ELSE
+			LET l_pres_nro = post:PresNro
+		END IF
 	END IF
 	
 	//Si fue cancelado, entonces no journaliza
-	IF (post:mp_status == "CANCELLED") THEN	
+	IF (post:mp_status == "CANCELLED" || post:mp_status_PS == "canceled") THEN	
 		LET l_opmp_jnlOK = "F"
 	END IF
 
@@ -151,7 +159,8 @@ SUB post:MISCsaveOpeMP(p_operacion,p_comando)
 			CALL csr:proc_list(F_APPEND,DSC:post:OperacionesMP_ctx ,LST:post:LISTget_opmp_order,2)  
 			//Cargo la info del Refund Smart Point
 			CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_refund,LST:post:LISTget_opmp_refund) 
-			CALL csr:proc_list(F_APPEND,DSC:post:OperacionesMP_ctx ,LST:post:LISTget_opmp_refund,2)  
+			CALL csr:proc_list(F_APPEND,DSC:post:OperacionesMP_ctx ,LST:post:LISTget_opmp_refund,2)
+
 		BREAK
 		CASE "QR_REFUND_POST"
 			//Cargo la info de la Orden	

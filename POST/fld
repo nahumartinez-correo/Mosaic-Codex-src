@@ -6,10 +6,10 @@
 * SOURCE
 */
 
-#include "C:\moaproj\V47.10\src\INCLUDE\Sap.h"
-#include "C:\moaproj\V47.10\src\INCLUDE\impresio.h"
-#include "C:\moaproj\V47.10\src\INCLUDE\tesoro.h"
-#include "C:\moaproj\V47.10\src\INCLUDE\sf1.h"
+#include "Sap.h"
+#include "impresio.h"
+#include "tesoro.h"
+#include "sf1.h"
 ;FLD objects  exported 04/06/1999  16:09:41
 ;by user SCAZEA, from path D:\MOAPROJ\teso\
 

@@ -1,6 +1,6 @@
-#include "C:\moaproj\V47.10\src\INCLUDE\impresio.h"
-#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
-#include "C:\moaproj\V47.10\src\INCLUDE\Sap.h"
+#include "impresio.h"
+#include "ofbdefs.h"
+#include "sap.h"
 #define RPT_ORIGINAL            0
 #define RPT_COPIA               1
 # define    SETEODOC         "\x1bc0\x04"

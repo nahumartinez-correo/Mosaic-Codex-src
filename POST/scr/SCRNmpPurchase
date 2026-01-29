@@ -15,7 +15,7 @@
 *   NI50546 Mercado Pago 
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\scr\postscr.h"
+#include "postscr.h"
 
 SCREEN post:SCRNmpPurchase,4,148,630,190,0,1,14,10,10,0
     SETFONT "Arial"

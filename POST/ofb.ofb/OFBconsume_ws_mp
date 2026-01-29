@@ -4,18 +4,18 @@
 * DESCRIPCION
 *   Consume los Web Services de Mercado Pago
 * ENTRADAS
-*   Par�metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber�n ser analizados al modificar el objeto actual
+*   Otros objetos que deberán ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   OFB:post:OFBws_mercadopago
 * DOCUMENTACION
-*   Documentaci�n relevante que deber� ser actualizada por la modificaci�n de la rutina
+*   Documentación relevante que deberá ser actualizada por la modificación de la rutina
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\ofb.ofb\postofb.ofb.h"
+#include "postofb.ofb.h"
 
 SUB post:OFBconsume_ws_mp
 
@@ -76,11 +76,11 @@ SUB post:OFBconsume_ws_mp
 			giros:codigo_procesamiento = 200025
 		BREAK
 		CASE "QR_REFUND_GET"
-			//POINT Integrado/QR Integrado - Consulta la Devoluci�n de un Pago   
+			//POINT Integrado/QR Integrado - Consulta la Devolución de un Pago   
 			giros:codigo_procesamiento = 210010
 		BREAK		
 		CASE "POINT_REFUND_GET"
-			//POINT Integrado/QR Integrado - Consulta la Devoluci�n de un Pago   
+			//POINT Integrado/QR Integrado - Consulta la Devolución de un Pago   
 			giros:codigo_procesamiento = 200010
 		BREAK	
 		CASE "MP_DEVICE_GET"

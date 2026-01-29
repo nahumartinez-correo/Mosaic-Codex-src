@@ -17,7 +17,7 @@
 *   NI50546 - Mercado Pago
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\ofb.ofb\postofb.ofb.h"
+#include "postofb.ofb.h"
 
 SUB post:OFBresponse_ws_mp
 

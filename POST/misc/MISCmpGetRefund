@@ -4,11 +4,11 @@
 * DESCRIPCION
 *   Obtiene una Devolucion de un Pago de Mercado Pago
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   
 * DOCUMENTACION

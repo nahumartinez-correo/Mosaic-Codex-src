@@ -15,7 +15,7 @@
 *   NI50546 - Mercado Pago
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\SEND\postSEND.h"
+#include "postSEND.h"
 
 SUB post:SENDconsulta_mp
 	LOCAL fechahora LIKE common:csr_string
@@ -35,7 +35,7 @@ SUB post:SENDconsulta_mp
 	// Se verifica si es Smart Point
 	IF (post:adt_tmp_codint_mp == "MPC" || post:adt_tmp_codint_mp == "MPD") THEN
 		// Se setea el bin de servicio para derivarse el request hacia el servicio de Smart Point
-		CALL post:MISCseteobit_mp(2,0x13)
+		CALL post:MISCseteobit_mp(2,0x15)
 	ELSE
 		// Se setea el bin de servicio para derivarse el request hacia el servicio de QR
 		CALL post:MISCseteobit_mp(2,0x12)
@@ -135,7 +135,7 @@ SUB post:SENDconsulta_mp
 			/* 1 - Por ahora, va a ser siempre que no imprima */
 			//                        " 1   "
 			FPRINT print_on_terminal, "%2.2s", \
-			"NT"
+			"ST"
 
 			// Se define el tipo de Smart Point que se usara
 			/* 1 - Por ahora, va a ser siempre Point */

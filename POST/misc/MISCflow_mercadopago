@@ -15,7 +15,7 @@
 *   NI50546 Mercado Pago 
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\misc\postmisc.h"
+#include "postmisc.h"
 
 SUB post:MISCflow_mercadopago
 	SETFLAG drv:mode_flags,popup_mode
@@ -37,18 +37,13 @@ SUB post:MISCflow_mercadopago
 						//Fuerzo la confirmacion porque ya se acredito el pago!!!
 						LASTKEY = RT_SEND
 					ELSE
-						//Si existe la Orden y no se efectuo el pago entonces cancelo la Orden 
+						//Si existe la Orden y no se efectuo el pago entonces cancelo la Orden  
 						CALL post:MISCmpDelOrderPoint
 						IF (post:mp_response_PS == 409) THEN
-							MSGBOX "La orden se encuentra en terminal. Cancelar desde posnet",0x00,"ATENCION"
 							WHILE (post:mp_status_PS != "canceled" && post:mp_status_PS != "processed") THEN
 								CALL post:MISCmpGetOrderPoint
 								IF (post:mp_status_PS != "canceled") THEN
 									MSGBOX "La orden se encuentra en terminal. Cancelar desde posnet",0x00,"ATENCION"
-								ELSEIF (post:mp_status_PS == "processed") THEN
-									MSGBOX "El pago ya fue realizado, si desea anularlo deber� hacerlo por Anulacion de Comprobantes",0x00,"ATENCION"
-									//Fuerzo la confirmacion porque ya se acredito el pago!!!
-									LASTKEY = RT_SEND
 								END IF
 							END WHILE
 						END IF 
@@ -57,6 +52,10 @@ SUB post:MISCflow_mercadopago
 							CALL post:CDSopmp_jnlFallo("VEN")
 							MSGBOX "Ha cancelado la orden de pago generada",0x00,"ATENCION"
 							RETURN -2
+						ELSEIF (post:mp_status_PS == "processed") THEN
+							MSGBOX "El pago ya fue realizado, si desea anularlo deber� hacerlo por Anulacion de Comprobantes",0x00,"ATENCION"
+							//Fuerzo la confirmacion porque ya se acredito el pago!!!
+							LASTKEY = RT_SEND
 						END IF
 					END IF
 				END IF

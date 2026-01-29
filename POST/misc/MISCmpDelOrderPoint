@@ -15,7 +15,7 @@
 *   NI50546 - Mercado Pago
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\misc\postmisc.h"
+#include "postmisc.h"
 SUB post:MISCmpDelOrderPoint
 	LOCAL l_retval LIKE lib:err_retval
 	LOCAl l_decimal LIKE siaf:i

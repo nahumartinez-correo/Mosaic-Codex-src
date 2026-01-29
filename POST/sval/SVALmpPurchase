@@ -15,7 +15,7 @@
 *   NI50546 Mercado Pago 
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\sval\postsval.h"
+#include "postsval.h"
 
 SUB post:SVALmpPurchase
 

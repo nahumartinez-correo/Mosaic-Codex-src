@@ -16,7 +16,7 @@
 *   NI50546 - Mercado Pago
 * SOURCE
 */
-#include "C:\moaproj\V47.10\src\POST\misc\postmisc.h"
+#include "postmisc.h"
 
 SUB post:MISCobtengo_mp(datos,long)
 	/**********************************************************************/
