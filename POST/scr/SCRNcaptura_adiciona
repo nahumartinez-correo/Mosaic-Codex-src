@@ -1,18 +1,18 @@
-/****s* Pendientes de agrupaciÛn/SCR:post:SCRNcaptura_adiciona
+/****s* Pendientes de agrupaci√≥n/SCR:post:SCRNcaptura_adiciona
 * NOMBRE
 *   SCR:post:SCRNcaptura_adiciona
 * DESCRIPCION
 *   Comportamiento del objeto (obligatorio)
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   DocumentaciÛn relevante que deber· ser actualizada por la modificaciÛn de la rutina
+*   Documentaci√≥n relevante que deber√° ser actualizada por la modificaci√≥n de la rutina
 * SOURCE
 */
 #include "postSCR.h"
@@ -84,7 +84,7 @@ PBcod_banco_diferido,-
     DRAW  FIELD 323,168,fec_d,FVALfecha_venc
     DRAW  FIELD 145,201,NroCompPago2,siaf:FVALcampo_no_cero
     DRAW  FIELD 550,201,Nro_Lote_Pos
-    DRAW  FIELD 145,224,NroTransac,siaf:FVALcampo_no_cero
+    DRAW  MLFIELD 145,224,160,16 0,20 NroTransac,siaf:FVALcampo_no_cero
     DRAW  FIELD 562,224,Tipo_Operacion_Pos
     SETBCOLOR 0x0E
     DRAW  LINE 3,180, 633,180, 1,1,0
