@@ -1,14 +1,14 @@
-/****s* Pendientes de agrupaciÛn/SCR:post:SCRN99600
+/****s* Pendientes de agrupaci√≥n/SCR:post:SCRN99600
 * NOMBRE
 *   post:SCRN99600
 * DESCRIPCION
 *   Pantalla de Anulacion de Tarjeta
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
@@ -53,7 +53,7 @@ SCREEN post:SCRN99600,0,68,669,340,9,1,14,8,30,0
     SETBCOLOR 0x17
     DRAW  FIELD 145,173,NroCompPago2
     DRAW  FIELD 545,173,Nro_Lote_Pos
-    DRAW  FIELD 145,201,NroTransac
+    DRAW  MLFIELD 145,201,81,16 0,15 NroTransac
     DRAW  FIELD 562,201,Tipo_Operacion_Pos
     SETFONT "Book Antiqua"
     SETSIZE 9
@@ -67,7 +67,7 @@ SCREEN post:SCRN99600,0,68,669,340,9,1,14,8,30,0
     SETBCOLOR 0x17
     DRAW  FIELD 145,283,NroCompPago2AN
     DRAW  FIELD 545,283,Nro_Lote_PosAN
-    DRAW  FIELD 145,311,NroTransacAN
+    DRAW  MLFIELD 145,311,81,16 0,15 NroTransacAN
     DRAW  FIELD 562,311,Tipo_Operacion_PosAN
     SETBCOLOR 0x0E
     DRAW  LINE 9,224, 633,224, 1,1,0
