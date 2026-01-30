@@ -84,7 +84,7 @@ PBcod_banco_diferido,-
     DRAW  FIELD 323,168,fec_d,FVALfecha_venc
     DRAW  FIELD 145,201,NroCompPago2,siaf:FVALcampo_no_cero
     DRAW  FIELD 550,201,Nro_Lote_Pos
-    DRAW  MLFIELD 145,224,81,16 0,15 NroTransac,siaf:FVALcampo_no_cero
+    DRAW  MLFIELD 145,224,160,16 0,20 NroTransac,siaf:FVALcampo_no_cero
     DRAW  FIELD 562,224,Tipo_Operacion_Pos
     SETBCOLOR 0x0E
     DRAW  LINE 3,180, 633,180, 1,1,0
