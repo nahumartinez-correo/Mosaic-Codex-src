@@ -105,23 +105,41 @@ SUB post:SVALmpPurchase
                         RETURN 0
                     END IF
 
+                    IF (post:mp_status_pago_PS == "canceled") THEN
+                        CALL post:CDSopmp_jnlFallo("VEN")
+                        post:mp_msg_guia = "Orden cancelada."
+                        CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
+                        refresh window
+                        RETURN -2
+                    END IF
+
                     LET retries = retries + 1
 
                     IF (retries == 5) THEN
-                      MSGBOX "No se obtuvo confirmacion del pago.\n ¿Desea volver a intentar?",OFB_YESNO,"ATENCION"
-                      IF (RETVAL == OFB_IDNO) THEN
-                        //cancela con esc
-                        CALL post:CDSopmp_jnlFallo("VEN")
-                        LET LASTKEY = RT_ESC
-                        RESETFLAG drv:mode_flags,popup_mode
-                        RETURN 0
-                      ELSE
-                        DPRINT "[RETRY] Usuario eligió volver a intentar.\n"
-                        //Si al reintento, reintenta
-                        LET retries = 0 
-                      END IF
+                        MSGBOX "No se obtuvo confirmacion del pago.\nPresione Aceptar para continuar consultando el estado.", OFB_OK, "ATENCION"
+                        LET retries = 0
+                        // sigue en el WHILE siempre que el estado siga siendo at_terminal
                     END IF
                 END WHILE
+                // Si salió del WHILE porque cambió el estado (ya no es at_terminal),
+                IF (post:mp_status_pago_PS == "processed" || post:mp_status_pago_PS == "approved") THEN
+                    post:mp_msg_guia = "Pago confirmado correctamente."
+                    CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
+                    refresh window
+                    RETURN 0
+                END IF
+
+                IF (post:mp_status_pago_PS == "canceled") THEN
+                    CALL post:CDSopmp_jnlFallo("VEN")
+                    post:mp_msg_guia = "Orden cancelada. Presione ESC para salir."
+                    CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
+                    refresh window
+                    RETURN -2
+                END IF
+
+                // Si cayó en otro estado no final (ej: action_required)
+                // para que el SELECT general lo maneje en la próxima entrada.
+                RETURN -2
 
             CASE "processed"
                 post:mp_msg_guia = "Pago procesado correctamente."

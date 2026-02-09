@@ -43,7 +43,7 @@ SUB post:MISCflow_mercadopago
 							WHILE (post:mp_status_PS != "canceled" && post:mp_status_PS != "processed") THEN
 								CALL post:MISCmpGetOrderPoint
 								IF (post:mp_status_PS != "canceled") THEN
-									MSGBOX "La orden se encuentra en terminal. Cancelar desde posnet",0x00,"ATENCION"
+									MSGBOX "Debe cancelar la orden de pago generada desde la terminal Point",0x00,"ATENCION"
 								END IF
 							END WHILE
 						END IF 

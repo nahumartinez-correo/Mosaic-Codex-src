@@ -16,7 +16,7 @@
 *   NI50525 POS Integrado
 * SOURCE
 */
-#include "src\POST\misc\postmisc.h"
+#include "postmisc.h"
 
 SUB post:MISCmpTipoCaida(p_operacion)
 	LOCAL l_retval LIKE lib:err_retval

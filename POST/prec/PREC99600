@@ -15,7 +15,7 @@
 *   NI50525 POS Integrado
 * SOURCE
 */
-#include "src\POST\prec\postprec.h"
+#include "postprec.h"
 
 SUB post:PREC99600
 	LOCAL l_retval LIKE lib:err_retval
