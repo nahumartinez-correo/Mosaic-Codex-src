@@ -2,7 +2,7 @@
 * NOMBRE
 *   OFB:post:MISCmpFinalRefundInc
 * DESCRIPCION
-*   Finaliza refunds Smart Point incompletos reutilizando el flujo de contingencias DEV
+*   Finaliza refunds Smart Point incompletos sin journalizar en medio de la anulacion
 * SOURCE
 */
 #include "C:\moaproj\Mosaic-gitlab\src\POST\misc\postmisc.h"
@@ -11,45 +11,110 @@ SUB post:MISCmpFinalRefundInc
 	LOCAL l_retval LIKE lib:err_retval
 	LOCAL l_jnlok LIKE post:adt_opmp_jnlOK
 	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_pres LIKE post:adt_opmp_PresNro
+	LOCAL l_refst LIKE post:mp_refund_status
+	LOCAL l_refps LIKE post:mp_refund_id_PS
+	LOCAL l_ordps LIKE post:mp_order_id_PS
 	LOCAL l_dbret LIKE lib:err_retval
 
-	DPRINT "[DBG] MISCmpFinalRefundInc: inicio (best-effort) fecha=[%s] login=[%s] termi=[%s]\n" common:system_date op:op_login_id common:window_node
+	DPRINT "[DBG] MISCmpFinalRefundInc: inicio cierre seguro fecha=[%s] login=[%s] termi=[%s]\n" common:system_date op:op_login_id common:window_node
+	DPRINT "[DBG] MISCmpFinalRefundInc: no usa JNLinitialize/JNLtran en hook de anulacion.\n"
 
-	//Proteccion: evita tocar otros pendientes DEV (ej. QRI)
-	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx 		WHERE post:adt_opmp_fecha == common:system_date 		&& post:adt_opmp_login_id == op:op_login_id 		&& post:adt_opmp_termi_win == common:window_node 		&& post:adt_opmp_operacion == "DEV" 		&& post:adt_opmp_jnlOK == "N" 		&& (post:adt_opmp_comandos != "POINT_REFUND_POST" || post:adt_opmp_codint_mp == "QRI")
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+		&& post:adt_opmp_codint_mp != "QRI" \
+		&& post:adt_opmp_jnlOK == "N"
 
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-	IF (CDSRETVAL == 0) THEN
-		DPRINT "[DBG] MISCmpFinalRefundInc: existe pendiente DEV no SmartPoint refund (o QRI). No ejecuto recovery para no mezclar casos.\n"
+	LET l_dbret = CDSRETVAL
+	IF (l_dbret != 0) THEN
 		CDS ENDSELECT DSC:post:OperacionesMP_ctx
+		DPRINT "[DBG] MISCmpFinalRefundInc: sin pendiente DEV/SP para cerrar.\n"
 		RETURN -2
 	END IF
+
+	CDS EXTRACT DSC:post:OperacionesMP_ctx \
+		post:adt_opmp_codseq_nro \
+		post:adt_opmp_PresNro \
+		post:adt_opmp_codint_mp \
+		post:adt_opmp_order_id_PS \
+		post:adt_opmp_ref_id_PS \
+		post:adt_opmp_ref_st_PS \
+		post:adt_opmp_st_det_PS \
+		post:adt_opmp_jnlOK
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
-	DPRINT "[DBG] MISCmpFinalRefundInc: voy a invocar MISCmpTipoCaida(DEV) para refund Smart Point incompleto.\n"
-	CALL post:MISCmpTipoCaida("DEV")
-	LET l_retval = RETVAL
-	LET l_codseq = post:adt_mp_codseq_nro
-	DPRINT "[DBG] MISCmpFinalRefundInc: retorno tipoCaida=[%d] codseq=[%s]\n" l_retval l_codseq
+	LET l_codseq = post:adt_opmp_codseq_nro
+	LET l_pres = post:adt_opmp_PresNro
 
-	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx 		WHERE post:adt_opmp_fecha == common:system_date 		&& post:adt_opmp_login_id == op:op_login_id 		&& post:adt_opmp_termi_win == common:window_node 		&& post:adt_opmp_operacion == "DEV" 		&& post:adt_opmp_comandos == "POINT_REFUND_POST" 		&& post:adt_opmp_codint_mp != "QRI" 		&& post:adt_opmp_codseq_nro == l_codseq
+	CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order)
+	CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_refund,LST:post:LISTset_opmp_refund)
+
+	IF (post:mp_order_id_PS.NUMCHARS == 0 && post:adt_opmp_order_id_PS.NUMCHARS > 0) THEN
+		LET post:mp_order_id_PS = post:adt_opmp_order_id_PS
+	END IF
+	IF (post:mp_refund_id_PS.NUMCHARS == 0 && post:adt_opmp_ref_id_PS.NUMCHARS > 0) THEN
+		LET post:mp_refund_id_PS = post:adt_opmp_ref_id_PS
+	END IF
+	IF (post:mp_refund_status_PS.NUMCHARS == 0 && post:adt_opmp_ref_st_PS.NUMCHARS > 0) THEN
+		LET post:mp_refund_status_PS = post:adt_opmp_ref_st_PS
+	END IF
+	IF (post:mp_status_detail_PS.NUMCHARS == 0 && post:adt_opmp_st_det_PS.NUMCHARS > 0) THEN
+		LET post:mp_status_detail_PS = post:adt_opmp_st_det_PS
+	END IF
+	IF (post:mp_refund_status.NUMCHARS == 0) THEN
+		LET post:mp_refund_status = post:mp_refund_status_PS
+	END IF
+
+	LET l_ordps = post:mp_order_id_PS
+	LET l_refps = post:mp_refund_id_PS
+	LET l_refst = post:mp_refund_status
+	DPRINT "[DBG] MISCmpFinalRefundInc: data codseq=[%s] pres=[%s] jnl=[%s] codint=[%s]\n" l_codseq l_pres post:adt_opmp_jnlOK post:adt_opmp_codint_mp
+	DPRINT "[DBG] MISCmpFinalRefundInc: data ordPS=[%s] refPS=[%s] refst=[%s] stdet=[%s]\n" l_ordps l_refps l_refst post:mp_status_detail_PS
+
+	IF (l_ordps.NUMCHARS == 0 || l_refps.NUMCHARS == 0) THEN
+		DPRINT "[DBG] MISCmpFinalRefundInc: sin ids minimos, no marca jnlOK. ordPS=[%s] refPS=[%s]\n" l_ordps l_refps
+		RETURN -2
+	END IF
+	IF (l_refst.NUMCHARS > 0 && l_refst != "processed") THEN
+		DPRINT "[DBG] MISCmpFinalRefundInc: refund status invalido para cerrar refst=[%s]\n" l_refst
+		RETURN -2
+	END IF
+
+	LET post:PresNro = l_pres
+	LET post:adt_vpi_codseq_nro = l_codseq
+	DPRINT "[DBG] MISCmpFinalRefundInc: marco jnlOK por CDSopmp_jnlOK op=[REFUND] codseq=[%s]\n" l_codseq
+	CALL post:CDSopmp_jnlOK("REFUND")
+	LET l_retval = RETVAL
+
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+		&& post:adt_opmp_codint_mp != "QRI" \
+		&& post:adt_opmp_codseq_nro == l_codseq
 
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
 	LET l_dbret = CDSRETVAL
 	IF (l_dbret == 0) THEN
 		CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_jnlOK INTO l_jnlok
-		DPRINT "[DBG] MISCmpFinalRefundInc: estado db codseq=[%s] jnlOK=[%s]\n" l_codseq l_jnlok
+		DPRINT "[DBG] MISCmpFinalRefundInc: estado db codseq=[%s] jnlOK=[%s] rv=[%d]\n" l_codseq l_jnlok l_retval
 	ELSE
-		DPRINT "[DBG] MISCmpFinalRefundInc: sin registro db codseq=[%s] post intento.\n" l_codseq
+		DPRINT "[DBG] MISCmpFinalRefundInc: sin registro db codseq=[%s] post marca jnl.\n" l_codseq
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
-	IF (l_retval < 0) THEN
-		DPRINT "[DBG] MISCmpFinalRefundInc: fallo al finalizar refund (RETVAL=[%d]). Se devolvera error al hook para informar, pero sin abortar anulacion.\n" l_retval
-		RETURN -2
+	IF (l_jnlok == "S") THEN
+		RETURN 0
 	END IF
 
-	RETURN 0
+	RETURN -2
 
 END SUB
 
