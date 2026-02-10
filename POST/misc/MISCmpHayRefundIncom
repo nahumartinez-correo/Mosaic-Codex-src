@@ -5,7 +5,7 @@
 *   Verifica si existen Refunds Smart Point incompletos (DEV) pendientes de journalizacion
 * SOURCE
 */
-#include "C:\moaproj\Mosaic-gitlab\src\POST\misc\postmisc.h"
+#include "src\POST\misc\postmisc.h"
 
 SUB post:MISCmpHayRefundIncom
 	LOCAL l_retval LIKE lib:err_retval
