@@ -1,14 +1,15 @@
-/****o* Pendientes de agrupaciÛn/OFB:post:CDSopmp_jnlFallo
+/****o* Pendientes de agrupaci√≥n/OFB:post:CDSopmp_jnlFallo
 * NOMBRE
 *   OFB:post:CDSopmp_jnlFallo
 * DESCRIPCION
 *   Actualiza la marca post:opvpi_jnlOK = "F"
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+	DPRINT "[DBG] CDSopmp_jnlFallo: inicio operacion=[%s] codseq=[%s] PresNro=[%s] codigo_siaf=[%d]\n" l_operacion post:adt_opmp_codseq_nro post:PresNro siaf:codigo_siaf
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   post:JNL99601_mpago
 * DOCUMENTACION

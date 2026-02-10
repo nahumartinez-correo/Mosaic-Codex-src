@@ -9,6 +9,9 @@
 
 SUB post:MISCmpHayRefundPointIncompleto
 	LOCAL l_retval LIKE lib:err_retval
+	LOCAL l_more LIKE lib:err_retval
+
+	DPRINT "[DBG] MISCmpHayRefundPointIncompleto: filtros fecha=[%s] login=[%s] termi=[%s] operacion=[DEV] comando=[POINT_REFUND_POST] codint!=[QRI] jnlOK=[N]\n" common:system_date op:op_login_id common:window_node
 
 	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
 		WHERE post:adt_opmp_fecha == common:system_date \
@@ -21,7 +24,30 @@ SUB post:MISCmpHayRefundPointIncompleto
 
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
 	LET l_retval = CDSRETVAL
+	IF (l_retval == 0) THEN
+		CDS EXTRACT DSC:post:OperacionesMP_ctx \
+			post:adt_opmp_operacion \
+			post:adt_opmp_comandos \
+			post:adt_opmp_codint_mp \
+			post:adt_opmp_jnlOK \
+			post:adt_opmp_codseq_nro \
+			post:adt_opmp_PresNro \
+			post:adt_opmp_order_id \
+			post:adt_opmp_ref_id \
+			post:adt_opmp_status_p_PS \
+			post:adt_opmp_payment_id \
+			post:adt_opmp_status_detail_PS
+		DPRINT "[DBG] MISCmpHayRefundPointIncompleto: encontrado codseq=[%s] pres=[%s] op=[%s] cmd=[%s] codint=[%s] jnlOK=[%s] order_id=[%s] refund_id=[%s] refund_status=[%s] payment_id=[%s] status_detail=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro post:adt_opmp_operacion post:adt_opmp_comandos post:adt_opmp_codint_mp post:adt_opmp_jnlOK post:adt_opmp_order_id post:adt_opmp_ref_id post:adt_opmp_status_p_PS post:adt_opmp_payment_id post:adt_opmp_status_detail_PS
+		CDS FINDNEXT DSC:post:OperacionesMP_ctx NOLOCK
+		LET l_more = CDSRETVAL
+		IF (l_more == 0) THEN
+			DPRINT "[DBG] WARNING MISCmpHayRefundPointIncompleto: se detecto mas de 1 refund incompleto. Se procesara solo el primero.\n"
+		END IF
+	ELSE
+		DPRINT "[DBG] MISCmpHayRefundPointIncompleto: no se encontraron refunds incompletos Smart Point.\n"
+	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+	DPRINT "[DBG] MISCmpHayRefundPointIncompleto: retorno RETVAL=[%d]\n" l_retval
 
 	RETURN l_retval
 
