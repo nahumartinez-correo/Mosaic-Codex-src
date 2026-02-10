@@ -1,0 +1,54 @@
+/****o* Mercado Pago/OFB:post:MISCmpFinalizarRefundsPointIncompletos
+* NOMBRE
+*   OFB:post:MISCmpFinalizarRefundsPointIncompletos
+* DESCRIPCION
+*   Finaliza refunds Smart Point incompletos reutilizando el flujo de contingencias DEV
+* SOURCE
+*/
+#include "postmisc.h"
+
+SUB post:MISCmpFinalizarRefundsPointIncompletos
+	LOCAL l_retval LIKE lib:err_retval
+	LOCAL l_contador LIKE siaf:i
+
+	l_contador = 0
+
+	//Proteccion: evita tocar otros pendientes DEV (ej. QRI)
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_jnlOK == "N" \
+		&& (post:adt_opmp_comandos != "POINT_REFUND_POST" || post:adt_opmp_codint_mp == "QRI")
+
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		CDS ENDSELECT DSC:post:OperacionesMP_ctx
+		RETURN -2
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	DO
+		CALL post:MISCmpHayRefundPointIncompleto
+		IF (RETVAL != 0) THEN
+			BREAK
+		END IF
+
+		CALL post:MISCmpTipoCaida("DEV")
+		l_retval = RETVAL
+		IF (l_retval < 0) THEN
+			RETURN -2
+		END IF
+
+		l_contador = l_contador + 1
+		IF (l_contador > 50) THEN
+			RETURN -2
+		END IF
+	LOOP
+
+	RETURN 0
+
+END SUB
+
+/*******/

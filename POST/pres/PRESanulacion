@@ -1,18 +1,31 @@
-/****o* Pendientes de agrupaciÛn/OFB:post:PRESanulacion
+/****o* Pendientes de agrupaci√≥n/OFB:post:PRESanulacion
 * NOMBRE
 *   OFB:post:PRESanulacion
 * DESCRIPCION
 *   Comportamiento del objeto (obligatorio)
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+	//Hook de contingencia: finaliza refunds Smart Point incompletos antes de iniciar la anulacion
+	IF (common:adt_mp_termi_integ == "S") THEN
+		CALL post:MISCmpHayRefundPointIncompleto
+		IF (RETVAL == 0) THEN
+			MSGBOX "Se detect un Refund para Smart Point incompleto.\nSe proceder a finalizarlo.",OFB_OK,"AVISO"
+			CALL post:MISCmpFinalizarRefundsPointIncompletos
+			IF (RETVAL < 0) THEN
+				MSGBOX "No se pudo finalizar el Refund incompleto de Smart Point.",OFB_OK,"ERROR"
+				RETURN (-2)
+			END IF
+		END IF
+	END IF
+
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   DocumentaciÛn relevante que deber· ser actualizada por la modificaciÛn de la rutina
+*   Documentaci√≥n relevante que deber√° ser actualizada por la modificaci√≥n de la rutina
 * SOURCE
 */
 #include "postpres.h"
@@ -34,7 +47,7 @@ SUB post:PRESanulacion
 
 	/*Deshabilito los menues*/
 	PDM ENABLEITEM pdm:drv:menubar ALL MOA_DISABLED
-	/*Deshabilito los botones de funciÛn*/
+	/*Deshabilito los botones de funci√≥n*/
 	CALL  CSR:tag TAG_REDRAW_ALL 1 BUT_GHOST -1 -1 -1 -1 -1 -1 "0 1"
 
 	protfield sesion_anul_string

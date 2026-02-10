@@ -1,0 +1,30 @@
+/****o* Mercado Pago/OFB:post:MISCmpHayRefundPointIncompleto
+* NOMBRE
+*   OFB:post:MISCmpHayRefundPointIncompleto
+* DESCRIPCION
+*   Verifica si existen Refunds Smart Point incompletos (DEV) pendientes de journalizacion
+* SOURCE
+*/
+#include "postmisc.h"
+
+SUB post:MISCmpHayRefundPointIncompleto
+	LOCAL l_retval LIKE lib:err_retval
+
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+		&& post:adt_opmp_codint_mp != "QRI" \
+		&& post:adt_opmp_jnlOK == "N"
+
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	LET l_retval = CDSRETVAL
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	RETURN l_retval
+
+END SUB
+
+/*******/
