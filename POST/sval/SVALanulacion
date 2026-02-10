@@ -1,18 +1,62 @@
-/****o* AnulaciÛn de Documentos/OFB:post:SVALanulacion
+/****o* Anulaci√≥n de Documentos/OFB:post:SVALanulacion
 * NOMBRE
 *   OFB:post:SVALanulacion
 * DESCRIPCION
-*  Esta rutina se ejecuta al confirmar la AnulaciÛn de Documentos (TX 7100)
+*  Esta rutina se ejecuta al confirmar la Anulaci√≥n de Documentos (TX 7100)
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+	LOCAL l_inc_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_inc_pres LIKE post:adt_opmp_PresNro
+	LOCAL l_sel_codseq LIKE post:adt_mp_codseq_nro
+	LOCAL l_sel_pres LIKE post:PresNro
+	LOCAL l_inc_act LIKE common:csr_string
+	CLEARFIELD post:adt_mp_codseq_nro
+
+	LET l_inc_codseq = post:adt_opmp_codseq_nro
+	LET l_inc_pres = post:adt_opmp_PresNro
+	LET l_sel_pres = post:PresNro
+	LET l_sel_codseq = post:adt_mp_codseq_nro
+	LET l_inc_act = "N"
+	IF (l_inc_codseq.NUMCHARS > 0 && l_inc_pres > 0) THEN
+		LET l_inc_act = "S"
+	END IF
+	IF (l_inc_act == "S") THEN
+		DPRINT "[DBG] SVALanulacion: val ses inc exp_codseq=[%s] exp_pres=[%s] sel_codseq=[%s] sel_pres=[%s]\n" l_inc_codseq l_inc_pres l_sel_codseq l_sel_pres
+		IF (l_sel_codseq == l_inc_codseq && l_sel_pres == l_inc_pres) THEN
+			DPRINT "[DBG] SVALanulacion: match sesion incompleta, activa cierre automatico.\n"
+			CALL post:MISCmpHayRefundIncom
+			IF (RETVAL == 0) THEN
+				CALL post:MISCmpFinalRefundInc
+				IF (RETVAL == 0) THEN
+					LET l_opmp_jnlOK = "S"
+					CLEARFIELD post:adt_opmp_codseq_nro
+					CLEARFIELD post:adt_opmp_PresNro
+				ELSE
+					DPRINT "[DBG] SVALanulacion: match pero fallo cierre automatico rv=[%d], sigue flujo normal.\n" RETVAL
+				END IF
+			END IF
+		ELSE
+			DPRINT "[DBG] SVALanulacion: mismatch sesion incompleta, fuerza flujo normal.\n"
+			MSGBOX "La sesion seleccionada no corresponde al Refund incompleto detectado.\nSe seguira el proceso normal.",OFB_OK,"AVISO"
+			CALL post:MISCclrArrayMP
+			CLEARFIELD post:mp_order_id_PS
+			CLEARFIELD post:mp_refund_id_PS
+			CLEARFIELD post:mp_refund_status_PS
+			CLEARFIELD post:mp_payment_id_PS
+			CLEARFIELD post:mp_order_id
+			CLEARFIELD post:mp_refund_id
+			CLEARFIELD post:mp_refund_status
+			CLEARFIELD post:mp_status_detail_PS
+		END IF
+	END IF
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   LST:post:TRANanulacion
 * DOCUMENTACION
-*   DocumentaciÛn relevante que deber· ser actualizada por la modificaciÛn de la rutina
+*   Documentaci√≥n relevante que deber√° ser actualizada por la modificaci√≥n de la rutina
 * SOURCE
 */
 #include "postsval.h"
@@ -31,7 +75,7 @@ SUB post:SVALanulacion
 	LOCAL l_opmp_jnlOK LIKE common:csr_string
 
 	IF (sesion_anul_string.NUMCHARS == 0) THEN
-		MSGBOX "Debe seleccionar una SesiÛn" OFB_OK "Error"
+		MSGBOX "Debe seleccionar una Sesi√≥n" OFB_OK "Error"
 		RETURN (-2)
 	END IF
 	
@@ -52,9 +96,9 @@ SUB post:SVALanulacion
 		END IF
 	END IF
 
-	/*Valido que el importe de la SesiÛn no quede negativa*/
+	/*Valido que el importe de la Sesi√≥n no quede negativa*/
 	IF (ImporteRestoNC < 0) THEN
-		MSGBOX "La SesiÛn no puede quedar con Importe negativo" OFB_OK "Error"
+		MSGBOX "La Sesi√≥n no puede quedar con Importe negativo" OFB_OK "Error"
 		RETURN (-2)
 	END IF
 	
@@ -109,7 +153,7 @@ SUB post:SVALanulacion
 			idx = idx + 1
 		LOOP
 		IF (cont != cant) THEN
-			MSGBOX "La SesiÛn no puede ser anulada en forma parcial." OFB_OK "Error"
+			MSGBOX "La Sesi√≥n no puede ser anulada en forma parcial." OFB_OK "Error"
 			RETURN (-2)
 		END IF
 	END IF
@@ -126,7 +170,7 @@ SUB post:SVALanulacion
 		guia_op = SUBSTR(common:csr_string,89,5)
 		CALL post:MISCverifContened(guia_cont,guia_op,"X") //(nro_guia_cont,operador_transf,marca_todas)
 		IF (RETVAL < 0) THEN
-			MSGBOX "Existen Transacciones ya Expedidas o Transferidas. No se podr· anular la sesiÛn." OFB_OK "Error"
+			MSGBOX "Existen Transacciones ya Expedidas o Transferidas. No se podr√° anular la sesi√≥n." OFB_OK "Error"
 			RETURN -2
 		END IF
 		idx = idx + 1
@@ -139,20 +183,20 @@ SUB post:SVALanulacion
 	//END IF	
 
 	IF (TESTFLAG(giros:giros_masivos,proc_anul_masivos)) THEN
-		MSGBOX "Esta Transaccion NO Admite Reversa. Solo ReimpresiÛn de Documento y ModificaciÛn del Medio de Pago.",OFB_OK ,"Aviso"
-		MSGBOX "Confirma la ReimpresiÛn del Documento?",OFB_YESNO ,"Aviso"
+		MSGBOX "Esta Transaccion NO Admite Reversa. Solo Reimpresi√≥n de Documento y Modificaci√≥n del Medio de Pago.",OFB_OK ,"Aviso"
+		MSGBOX "Confirma la Reimpresi√≥n del Documento?",OFB_YESNO ,"Aviso"
 		IF (RETVAL == 7) THEN
 			RETURN (-2)
 		END IF
 	ELSE
-		MSGBOX "Confirma la AnulaciÛn de las Transacciones seleccionadas?",0x01,"ConfirmaciÛn"
+		MSGBOX "Confirma la Anulaci√≥n de las Transacciones seleccionadas?",0x01,"Confirmaci√≥n"
 	END IF
 	IF (RETVAL == 2) THEN
 		RETURN (-2)
 	END IF
 
-	/*Seteo este campo que cuando es una TransacciÛn de Teclas R·pidas queda vacio, pero, como
-	dirÌa mi Maestro Pablo Massera, "M·s vale prevenir que curar" - Gabriel Falciola*/
+	/*Seteo este campo que cuando es una Transacci√≥n de Teclas R√°pidas queda vacio, pero, como
+	dir√≠a mi Maestro Pablo Massera, "M√°s vale prevenir que curar" - Gabriel Falciola*/
 	post:fecha = common:system_date
 	post:op_operator_id = op:op_operator_id
 
@@ -213,7 +257,7 @@ SUB post:SVALanulacion
 		RETURN (-2)
 	END IF
 
-	/*AnulaciÛn Parcial*/
+	/*Anulaci√≥n Parcial*/
 	CALL MISCanulParcial
 
 	/*CSZ*/

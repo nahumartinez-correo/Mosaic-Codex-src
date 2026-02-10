@@ -44,6 +44,8 @@ SUB post:MISCmpHayRefundIncom
 		DPRINT "[DBG] MISCmpHayRefundIncom: cols order=[%s] orderPS=[%s] ref=[%s] refPS=[%s]\n" post:adt_opmp_order_id post:adt_opmp_order_id_PS post:adt_opmp_ref_id post:adt_opmp_ref_id_PS
 		DPRINT "[DBG] MISCmpHayRefundIncom: cols refstPS=[%s] stdetPS=[%s] stpayPS=[%s] payid=[%s]\n" post:adt_opmp_ref_st_PS post:adt_opmp_st_det_PS post:adt_opmp_status_p_PS post:adt_opmp_payment_id
 
+		DPRINT "[DBG] MISCmpHayRefundIncom: ses esp act=[S] exp_codseq=[%s] exp_pres=[%s] jnlOK=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro post:adt_opmp_jnlOK
+
 		CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order)
 		CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_refund,LST:post:LISTset_opmp_refund)
 		DPRINT "[DBG] MISCmpHayRefundIncom: post orderPS=[%s] payPS=[%s] refPS=[%s] refstPS=[%s]\n" post:mp_order_id_PS post:mp_payment_id_PS post:mp_refund_id_PS post:mp_refund_status_PS
@@ -54,6 +56,8 @@ SUB post:MISCmpHayRefundIncom
 			DPRINT "[DBG] WARNING MISCmpHayRefundIncom: se detecto mas de 1 refund incompleto. Se procesara solo el primero.\n"
 		END IF
 	ELSE
+		CLEARFIELD post:adt_opmp_codseq_nro
+		CLEARFIELD post:adt_opmp_PresNro
 		DPRINT "[DBG] MISCmpHayRefundIncom: no se encontraron refunds incompletos Smart Point.\n"
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx

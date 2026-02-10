@@ -38,12 +38,7 @@ SUB post:PRESanulacion
 		CALL post:MISCmpHayRefundIncom
 		DPRINT "[DBG] PRESanulacion hook: resultado MISCmpHayRefundIncom RETVAL=[%d]\n" RETVAL
 		IF (RETVAL == 0) THEN
-			MSGBOX "Se detect un Refund para Smart Point incompleto.\nSe proceder a finalizarlo.",OFB_OK,"AVISO"
-			CALL post:MISCmpFinalRefundInc
-			DPRINT "[DBG] PRESanulacion hook: retorno finalRefund RETVAL=[%d] cur_tran=[%s] ind_tran=[%s]\n" RETVAL drv:INDcur_tran tlr:INDtran_name
-			IF (RETVAL < 0) THEN
-				MSGBOX "No se pudo finalizar el Refund incompleto de Smart Point.\nSe continuara con la anulacion.",OFB_OK,"ERROR"
-			END IF
+			MSGBOX "Se detect un Refund para Smart Point incompleto.\nSe preseleccionara la sesion para finalizarlo.",OFB_OK,"AVISO"
 		END IF
 		DPRINT "[DBG] PRESanulacion hook: fin hook ses_str=[%s] pres=[%s]\n" post:sesion_anul_string post:PresNro
 	END IF

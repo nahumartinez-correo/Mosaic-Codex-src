@@ -1,23 +1,50 @@
-/****o* Pendientes de agrupación/OFB:post:CDSsesion_anul_sel
+/****o* Pendientes de agrupaciï¿½n/OFB:post:CDSsesion_anul_sel
 * NOMBRE
 *   OFB:post:CDSsesion_anul_sel
 * DESCRIPCION
 *   Comportamiento del objeto (obligatorio)
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   Documentación relevante que deberá ser actualizada por la modificación de la rutina
+*   Documentaciï¿½n relevante que deberï¿½ ser actualizada por la modificaciï¿½n de la rutina
 * SOURCE
 */
 #include "postcds.h"
 
 SUB post:CDSsesion_anul_sel
+	LOCAL l_exp_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_exp_pres LIKE post:adt_opmp_PresNro
+	LOCAL l_auto_ret LIKE lib:err_retval
+
+	LET l_exp_codseq = post:adt_opmp_codseq_nro
+	LET l_exp_pres = post:adt_opmp_PresNro
+	IF (l_exp_codseq.NUMCHARS > 0 && l_exp_pres > 0) THEN
+		CDS SELECT FROM DSC:TmpDocFis_table BECOMES DSC:TmpDocFis_context WHERE\
+			(tlr:jnl_operator == op:op_operator_id && \
+			tlr:jnl_bus_date == common:system_date && \
+			PresNro == l_exp_pres && \
+			tlr:jnl_sequence == l_exp_codseq)
+		CDS FINDFIRST DSC:TmpDocFis_context NOLOCK
+		LET l_auto_ret = CDSRETVAL
+		IF (l_auto_ret == 0) THEN
+			DPRINT "[DBG] CDSsesion_anul_sel: auto sel sesion exp_codseq=[%s] exp_pres=[%s]\n" l_exp_codseq l_exp_pres
+			CDS EXTRACT DSC:TmpDocFis_context ALL
+			CDS UNLOCK DSC:TmpDocFis_context
+			CDS ENDSELECT DSC:TmpDocFis_context
+			giros:PresNro_canc = PresNro
+			RETURN 0
+		ELSE
+			DPRINT "[DBG] CDSsesion_anul_sel: auto sel sin match exp_codseq=[%s] exp_pres=[%s] rv=[%d]\n" l_exp_codseq l_exp_pres l_auto_ret
+		END IF
+		CDS ENDSELECT DSC:TmpDocFis_context
+	END IF
+
 offset_0000:
     CDS SELECT FROM DSC:TmpDocFis_table BECOMES DSC:TmpDocFis_context where\
    	(tlr:jnl_operator == op:op_operator_id && \
@@ -37,7 +64,7 @@ offset_0000:
     END IF
     CDS EXTRACT DSC:TmpDocFis_context ALL
     CDS UNLOCK DSC:TmpDocFis_context
-    /*Seteo el PresNro en este campo para Cancelación de Giros - Gabriel Falciola*/
+    /*Seteo el PresNro en este campo para Cancelaciï¿½n de Giros - Gabriel Falciola*/
     giros:PresNro_canc = PresNro
 END SUB
 
