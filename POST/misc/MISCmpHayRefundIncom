@@ -33,11 +33,21 @@ SUB post:MISCmpHayRefundIncom
 			post:adt_opmp_codseq_nro \
 			post:adt_opmp_PresNro \
 			post:adt_opmp_order_id \
+			post:adt_opmp_order_id_PS \
 			post:adt_opmp_ref_id \
+			post:adt_opmp_ref_id_PS \
+			post:adt_opmp_ref_st_PS \
+			post:adt_opmp_st_det_PS \
 			post:adt_opmp_status_p_PS \
 			post:adt_opmp_payment_id
 		DPRINT "[DBG] MISCmpHayRefundIncom: encontrado codseq=[%s] pres=[%s] op=[%s] cmd=[%s] codint=[%s] jnlOK=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro post:adt_opmp_operacion post:adt_opmp_comandos post:adt_opmp_codint_mp post:adt_opmp_jnlOK
-		DPRINT "[DBG] MISCmpHayRefundIncom: encontrado order_id=[%s] refund_id=[%s] refund_status=[%s] payment_id=[%s]\n" post:adt_opmp_order_id post:adt_opmp_ref_id post:adt_opmp_status_p_PS post:adt_opmp_payment_id
+		DPRINT "[DBG] MISCmpHayRefundIncom: cols order=[%s] orderPS=[%s] ref=[%s] refPS=[%s]\n" post:adt_opmp_order_id post:adt_opmp_order_id_PS post:adt_opmp_ref_id post:adt_opmp_ref_id_PS
+		DPRINT "[DBG] MISCmpHayRefundIncom: cols refstPS=[%s] stdetPS=[%s] stpayPS=[%s] payid=[%s]\n" post:adt_opmp_ref_st_PS post:adt_opmp_st_det_PS post:adt_opmp_status_p_PS post:adt_opmp_payment_id
+
+		CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order)
+		CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_refund,LST:post:LISTset_opmp_refund)
+		DPRINT "[DBG] MISCmpHayRefundIncom: post orderPS=[%s] payPS=[%s] refPS=[%s] refstPS=[%s]\n" post:mp_order_id_PS post:mp_payment_id_PS post:mp_refund_id_PS post:mp_refund_status_PS
+		DPRINT "[DBG] MISCmpHayRefundIncom: post ref=[%s] refst=[%s] stdet=[%s]\n" post:mp_refund_id post:mp_refund_status post:mp_status_detail_PS
 		CDS FINDNEXT DSC:post:OperacionesMP_ctx NOLOCK
 		LET l_more = CDSRETVAL
 		IF (l_more == 0) THEN

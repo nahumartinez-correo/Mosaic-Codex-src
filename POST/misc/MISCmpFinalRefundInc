@@ -10,17 +10,13 @@
 SUB post:MISCmpFinalRefundInc
 	LOCAL l_retval LIKE lib:err_retval
 	LOCAL l_jnlok LIKE post:adt_opmp_jnlOK
+	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_dbret LIKE lib:err_retval
 
 	DPRINT "[DBG] MISCmpFinalRefundInc: inicio (best-effort) fecha=[%s] login=[%s] termi=[%s]\n" common:system_date op:op_login_id common:window_node
 
 	//Proteccion: evita tocar otros pendientes DEV (ej. QRI)
-	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-		WHERE post:adt_opmp_fecha == common:system_date \
-		&& post:adt_opmp_login_id == op:op_login_id \
-		&& post:adt_opmp_termi_win == common:window_node \
-		&& post:adt_opmp_operacion == "DEV" \
-		&& post:adt_opmp_jnlOK == "N" \
-		&& (post:adt_opmp_comandos != "POINT_REFUND_POST" || post:adt_opmp_codint_mp == "QRI")
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx 		WHERE post:adt_opmp_fecha == common:system_date 		&& post:adt_opmp_login_id == op:op_login_id 		&& post:adt_opmp_termi_win == common:window_node 		&& post:adt_opmp_operacion == "DEV" 		&& post:adt_opmp_jnlOK == "N" 		&& (post:adt_opmp_comandos != "POINT_REFUND_POST" || post:adt_opmp_codint_mp == "QRI")
 
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
 	IF (CDSRETVAL == 0) THEN
@@ -33,22 +29,18 @@ SUB post:MISCmpFinalRefundInc
 	DPRINT "[DBG] MISCmpFinalRefundInc: voy a invocar MISCmpTipoCaida(DEV) para refund Smart Point incompleto.\n"
 	CALL post:MISCmpTipoCaida("DEV")
 	LET l_retval = RETVAL
-	DPRINT "[DBG] MISCmpFinalRefundInc: retorno MISCmpTipoCaida RETVAL=[%d]\n" l_retval
+	LET l_codseq = post:adt_mp_codseq_nro
+	DPRINT "[DBG] MISCmpFinalRefundInc: retorno tipoCaida=[%d] codseq=[%s]\n" l_retval l_codseq
 
-	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-		WHERE post:adt_opmp_fecha == common:system_date \
-		&& post:adt_opmp_login_id == op:op_login_id \
-		&& post:adt_opmp_termi_win == common:window_node \
-		&& post:adt_opmp_operacion == "DEV" \
-		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
-		&& post:adt_opmp_codint_mp != "QRI"
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx 		WHERE post:adt_opmp_fecha == common:system_date 		&& post:adt_opmp_login_id == op:op_login_id 		&& post:adt_opmp_termi_win == common:window_node 		&& post:adt_opmp_operacion == "DEV" 		&& post:adt_opmp_comandos == "POINT_REFUND_POST" 		&& post:adt_opmp_codint_mp != "QRI" 		&& post:adt_opmp_codseq_nro == l_codseq
 
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-	IF (CDSRETVAL == 0) THEN
+	LET l_dbret = CDSRETVAL
+	IF (l_dbret == 0) THEN
 		CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_jnlOK INTO l_jnlok
-		DPRINT "[DBG] MISCmpFinalRefundInc: estado posterior jnlOK=[%s] para refund Smart Point.\n" l_jnlok
+		DPRINT "[DBG] MISCmpFinalRefundInc: estado db codseq=[%s] jnlOK=[%s]\n" l_codseq l_jnlok
 	ELSE
-		DPRINT "[DBG] MISCmpFinalRefundInc: no se encontro registro Smart Point post intento de recovery.\n"
+		DPRINT "[DBG] MISCmpFinalRefundInc: sin registro db codseq=[%s] post intento.\n" l_codseq
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 

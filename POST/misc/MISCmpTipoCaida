@@ -74,7 +74,8 @@ SUB post:MISCmpTipoCaida(p_operacion)
 	post:adt_opmp_status_p_PS \
 	post:adt_opmp_jnlOK 
 	DPRINT "[DBG] MISCmpTipoCaida: pendiente seleccionado codseq=[%s] pres=[%s] op=[%s] cmd=[%s] codint=[%s] jnlOK=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro post:adt_opmp_operacion post:adt_opmp_comandos post:adt_opmp_codint_mp post:adt_opmp_jnlOK
-	DPRINT "[DBG] MISCmpTipoCaida: pendiente seleccionado order_id=[%s] refund_id=[%s] status_refund=[%s] payment_id=[%s]\n" post:adt_opmp_order_id post:adt_opmp_ref_id post:adt_opmp_status_p_PS post:adt_opmp_payment_id
+	DPRINT "[DBG] MISCmpTipoCaida: cols order=[%s] orderPS=[%s] ref=[%s] refPS=[%s]\n" post:adt_opmp_order_id post:adt_opmp_order_id_PS post:adt_opmp_ref_id post:adt_opmp_ref_id_PS
+	DPRINT "[DBG] MISCmpTipoCaida: cols refstPS=[%s] stdetPS=[%s] stpayPS=[%s] payid=[%s]\n" post:adt_opmp_ref_st_PS post:adt_opmp_st_det_PS post:adt_opmp_status_p_PS post:adt_opmp_payment_id
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 	
 	//Cargo el codigo de la transaccion
@@ -211,8 +212,8 @@ SUB post:MISCmpTipoCaida(p_operacion)
 			//Resguardo la lista
 			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order) 
 			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_payment,LST:post:LISTset_opmp_payment)
-			//Smart Point: cargo datos locales del refund sin usar consultas 200010
-			CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_refund,LST:post:LISTget_opmp_refund)
+			//Smart Point: cargo datos locales guardados en OperacionesMP
+			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_refund,LST:post:LISTset_opmp_refund)
 		END IF	
 		
 		IF (post:adt_opmp_codint_mp == "QRI") THEN
@@ -232,19 +233,44 @@ SUB post:MISCmpTipoCaida(p_operacion)
 				RETURN -2
 			END IF
 		ELSE
-			DPRINT "[DBG] MISCmpTipoCaida: rama DEV/SmartPoint (codint!=QRI=[%s]). Validacion local refund.\n" post:adt_opmp_codint_mp
-			//Smart Point: valido con la info local y la respuesta 200025 previa
+			DPRINT "[DBG] MISCmpTipoCaida: rama DEV/SP codint=[%s] antes load.\n" post:adt_opmp_codint_mp
+			DPRINT "[DBG] MISCmpTipoCaida: before mp ordPS=[%s] payPS=[%s] refPS=[%s] refstPS=[%s]\n" post:mp_order_id_PS post:mp_payment_id_PS post:mp_refund_id_PS post:mp_refund_status_PS
+			DPRINT "[DBG] MISCmpTipoCaida: before adt ordPS=[%s] refPS=[%s] refstPS=[%s] stdetPS=[%s]\n" post:adt_opmp_order_id_PS post:adt_opmp_ref_id_PS post:adt_opmp_ref_st_PS post:adt_opmp_st_det_PS
+
+			IF (post:mp_order_id_PS.NUMCHARS == 0 && post:adt_opmp_order_id_PS.NUMCHARS > 0) THEN
+				LET post:mp_order_id_PS = post:adt_opmp_order_id_PS
+			END IF
+			IF (post:mp_payment_id_PS.NUMCHARS == 0 && post:adt_opmp_pay_id_PS.NUMCHARS > 0) THEN
+				LET post:mp_payment_id_PS = post:adt_opmp_pay_id_PS
+			END IF
+			IF (post:mp_refund_id_PS.NUMCHARS == 0 && post:adt_opmp_ref_id_PS.NUMCHARS > 0) THEN
+				LET post:mp_refund_id_PS = post:adt_opmp_ref_id_PS
+			END IF
+			IF (post:mp_refund_status_PS.NUMCHARS == 0 && post:adt_opmp_ref_st_PS.NUMCHARS > 0) THEN
+				LET post:mp_refund_status_PS = post:adt_opmp_ref_st_PS
+			END IF
+			IF (post:mp_status_detail_PS.NUMCHARS == 0 && post:adt_opmp_st_det_PS.NUMCHARS > 0) THEN
+				LET post:mp_status_detail_PS = post:adt_opmp_st_det_PS
+			END IF
+
 			IF (post:mp_refund_status.NUMCHARS == 0) THEN
 				LET post:mp_refund_status = post:mp_refund_status_PS
 			END IF
 			IF (post:mp_refund_id.NUMCHARS == 0) THEN
 				LET post:mp_refund_id = post:mp_refund_id_PS
 			END IF
-			IF (post:mp_refund_id_PS.NUMCHARS == 0 && post:mp_refund_status != "processed") THEN
-				DPRINT "[DBG] MISCmpTipoCaida: condicion jnlFallo DEV/SmartPoint refund incompleto. refund_id_PS=[%s] refund_status=[%s]\n" post:mp_refund_id_PS post:mp_refund_status
-				//Actualizo la marca en la tabla OperacionesMP
+
+			DPRINT "[DBG] MISCmpTipoCaida: after mp ordPS=[%s] payPS=[%s] refPS=[%s] refstPS=[%s]\n" post:mp_order_id_PS post:mp_payment_id_PS post:mp_refund_id_PS post:mp_refund_status_PS
+			DPRINT "[DBG] MISCmpTipoCaida: after mp ref=[%s] refst=[%s] stdet=[%s]\n" post:mp_refund_id post:mp_refund_status post:mp_status_detail_PS
+
+			IF (post:mp_order_id_PS.NUMCHARS == 0 || post:mp_refund_id_PS.NUMCHARS == 0) THEN
+				DPRINT "[DBG] MISCmpTipoCaida: jnlFallo DEV/SP faltan ids ordPS=[%s] refPS=[%s]\n" post:mp_order_id_PS post:mp_refund_id_PS
 				CALL post:CDSopmp_jnlFallo("VEN")
-				
+				RETURN -2
+			END IF
+			IF (post:mp_refund_status.NUMCHARS > 0 && post:mp_refund_status != "processed") THEN
+				DPRINT "[DBG] MISCmpTipoCaida: jnlFallo DEV/SP ref status no processed refst=[%s]\n" post:mp_refund_status
+				CALL post:CDSopmp_jnlFallo("VEN")
 				RETURN -2
 			END IF
 		END IF
