@@ -16,7 +16,7 @@
 *   NI50525 POS Integrado
 * SOURCE
 */
-#include "postmisc.h"
+#include "src\POST\misc\postmisc.h"
 
 SUB post:MISCmpTipoCaida(p_operacion)
 	LOCAL l_retval LIKE lib:err_retval
@@ -73,7 +73,8 @@ SUB post:MISCmpTipoCaida(p_operacion)
 	post:adt_opmp_operacion \
 	post:adt_opmp_status_p_PS \
 	post:adt_opmp_jnlOK 
-	DPRINT "[DBG] MISCmpTipoCaida: pendiente seleccionado codseq=[%s] pres=[%s] op=[%s] cmd=[%s] codint=[%s] jnlOK=[%s] order_id=[%s] refund_id=[%s] status_refund=[%s] payment_id=[%s] status_detail=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro post:adt_opmp_operacion post:adt_opmp_comandos post:adt_opmp_codint_mp post:adt_opmp_jnlOK post:adt_opmp_order_id post:adt_opmp_ref_id post:adt_opmp_status_p_PS post:adt_opmp_payment_id post:adt_opmp_status_detail_PS
+	DPRINT "[DBG] MISCmpTipoCaida: pendiente seleccionado codseq=[%s] pres=[%s] op=[%s] cmd=[%s] codint=[%s] jnlOK=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro post:adt_opmp_operacion post:adt_opmp_comandos post:adt_opmp_codint_mp post:adt_opmp_jnlOK
+	DPRINT "[DBG] MISCmpTipoCaida: pendiente seleccionado order_id=[%s] refund_id=[%s] status_refund=[%s] payment_id=[%s]\n" post:adt_opmp_order_id post:adt_opmp_ref_id post:adt_opmp_status_p_PS post:adt_opmp_payment_id
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 	
 	//Cargo el codigo de la transaccion
