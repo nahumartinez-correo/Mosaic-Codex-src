@@ -177,11 +177,25 @@ SUB post:MISCsaveOpeMP(p_operacion,p_comando)
   	l_comando AS post:adt_opmp_comandos \
   	l_opmp_jnlOK AS post:adt_opmp_jnlOK
 
+	// DEVONLY:PAUSE_REFUND_200025 BEGIN
+	// DEVONLY:PAUSE_REFUND_200025 B1
+	IF (post:dbg_rf200025 == "S" && l_comando == "POINT_REFUND_POST" && siaf:codigo_siaf == 99600) THEN
+		MSGBOX "DEV PAUSE B1: Refund 200025 before save OperacionesMP",OFB_OK,"DEV"
+	END IF
+	// DEVONLY:PAUSE_REFUND_200025 END
+
 	IF (l_retval == -801) THEN
 		CDS INSERT DSC:post:OperacionesMP_ctx LOCK
 	ELSE
 		CDS REPLACE DSC:post:OperacionesMP_ctx LOCK
 	END IF
+
+	// DEVONLY:PAUSE_REFUND_200025 BEGIN
+	// DEVONLY:PAUSE_REFUND_200025 B2
+	IF (post:dbg_rf200025 == "S" && l_comando == "POINT_REFUND_POST" && siaf:codigo_siaf == 99600) THEN
+		MSGBOX "DEV PAUSE B2: Refund 200025 after save OperacionesMP",OFB_OK,"DEV"
+	END IF
+	// DEVONLY:PAUSE_REFUND_200025 END
 	CDS UNLOCK DSC:post:OperacionesMP_ctx	
 	
 END SUB

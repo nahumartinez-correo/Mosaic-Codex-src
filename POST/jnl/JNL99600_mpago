@@ -1,14 +1,28 @@
-/****o* Pendientes de agrupaciÛn/OFB:post:JNL99600_mpago
+
+	// DEVONLY:PAUSE_REFUND_200025 BEGIN
+	// DEVONLY:PAUSE_REFUND_200025 C1
+	IF (post:dbg_rf200025 == "S" && post:mp_comandos == "POINT_REFUND_POST" && siaf:codigo_siaf == 99600) THEN
+		MSGBOX "DEV PAUSE C1: Refund 99600 before journal",OFB_OK,"DEV"
+	END IF
+	// DEVONLY:PAUSE_REFUND_200025 END
+
+	// DEVONLY:PAUSE_REFUND_200025 BEGIN
+	// DEVONLY:PAUSE_REFUND_200025 C2
+	IF (post:dbg_rf200025 == "S" && post:mp_comandos == "POINT_REFUND_POST" && siaf:codigo_siaf == 99600) THEN
+		MSGBOX "DEV PAUSE C2: Refund 99600 after journal",OFB_OK,"DEV"
+	END IF
+	// DEVONLY:PAUSE_REFUND_200025 END
+/****o* Pendientes de agrupaci√≥n/OFB:post:JNL99600_mpago
 * NOMBRE
 *   OFB:post:JNL99600_mpago
 * DESCRIPCION
 *   Rutina que Journaliza campos de Anulacion de Venta con Tarjeta.
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   post:JNL99600
 * DOCUMENTACION

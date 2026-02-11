@@ -19,6 +19,14 @@
 SUB post:MISCmpRefundPayment
 	LOCAL l_retval LIKE lib:err_retval
 	
+	// DEVONLY:PAUSE_REFUND_200025 BEGIN
+	IF (siaf:codigo_siaf == 99600) THEN
+		LET post:dbg_rf200025 = "S"
+	ELSE
+		CLEARFIELD post:dbg_rf200025
+	END IF
+	// DEVONLY:PAUSE_REFUND_200025 END
+	
 	IF (post:mp_codint_mp == "QRI") THEN
 		LET post:mp_comandos = "QR_REFUND_POST"
 	ELSE
@@ -60,6 +68,13 @@ SUB post:MISCmpRefundPayment
 	DPRINT "post:mp_tmp_adic[3][%s]\n" post:mp_tmp_adic[3]
 	DPRINT "post:mp_tmp_adic[4][%s]\n" post:mp_tmp_adic[4]
 	
+	// DEVONLY:PAUSE_REFUND_200025 BEGIN
+	// DEVONLY:PAUSE_REFUND_200025 A1
+	IF (post:dbg_rf200025 == "S" && post:mp_comandos == "POINT_REFUND_POST" && giros:codigo_procesamiento == 200025) THEN
+		MSGBOX "DEV PAUSE A1: Refund 200025 Host RX (pre-parse)",OFB_OK,"DEV"
+	END IF
+	// DEVONLY:PAUSE_REFUND_200025 END
+	
 	//Rutina generica para el tratamiento de la respuesta de los WS de Mercado Pago
 	CALL post:OFBresponse_ws_mp
 	
@@ -94,6 +109,12 @@ SUB post:MISCmpRefundPayment
 		
 		//Grabo en la tabla OperacionesMP
 		CALL post:MISCsaveOpeMP(post:mp_operacion,post:mp_comandos)
+		
+		// DEVONLY:PAUSE_REFUND_200025 BEGIN
+		IF (post:dbg_rf200025 == "S") THEN
+			CLEARFIELD post:dbg_rf200025
+		END IF
+		// DEVONLY:PAUSE_REFUND_200025 END
 	ELSE
 		DPRINT "post:mp_response_code[%s]\n" post:mp_response_code
 		DPRINT "post:mp_status][%s]\n" post:mp_status
@@ -102,6 +123,12 @@ SUB post:MISCmpRefundPayment
 		DPRINT "post:mp_response_cause][%s]\n" post:mp_response_cause
 		
 		LET l_retval = -2
+
+		// DEVONLY:PAUSE_REFUND_200025 BEGIN
+		IF (post:dbg_rf200025 == "S") THEN
+			CLEARFIELD post:dbg_rf200025
+		END IF
+		// DEVONLY:PAUSE_REFUND_200025 END
 	END IF
 	
 	RETURN l_retval

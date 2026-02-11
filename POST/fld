@@ -7101,6 +7101,7 @@ adt_stockp_lugarGuar ASCII 30 1 ~ SCdEAscUrdmpbdha 0 0 0 0 0 0 0
 //NI50546 - Mercado Pago
 mp_ws_parametros ASCII 1024 ~ ~ scdeascurdmpbdha 0 0 0 0 0 0 0                      // Parametros que se le pasan a los Web Services
 mp_comandos ASCII 20 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0        						          // Tipo de WS "ORDEN + [POST/GET/DEL]","REFOUND + [POST]", "DEVICES + [GET]","PAYMENT + [GET]" 
+dbg_rf200025 ASCII 1 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                              // Flag DEV para pausas Refund Point
 mp_tmp_adic[10] ASCII 100 1 ~ SCDEAscurDmpbdha 0 0 0 0 0 0 OFB:siaf:DUREpipe         // Campos de respuesta de mensajeria de Mercado Pago
 mp_amount ASCII 12 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0																// Monto *100 El monto que se le va a cobrar al cliente (*).
 mp_description ASCII 20 10 ~ SCdEAscUrDmpbdha 0 0 0 0 0 0 0 												// Una descripci�n de la operaci�n (M�x.: 20 car�cteres) (*).
