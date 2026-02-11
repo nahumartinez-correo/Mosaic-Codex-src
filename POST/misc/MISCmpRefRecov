@@ -1,0 +1,230 @@
+/****o* Mercado Pago/OFB:post:MISCmpRefRecov
+* NOMBRE
+*   OFB:post:MISCmpRefRecov
+* DESCRIPCION
+*   Recovery de refund MP incompleto al login
+* SOURCE
+*/
+#include "postmisc.h"
+
+SUB post:MISCmpRefRecov
+	LOCAL l_retval LIKE lib:err_retval
+	LOCAL l_hay_opmp LIKE siaf:idx
+	LOCAL l_hay_jnl996 LIKE siaf:idx
+	LOCAL l_hay_jnl99099 LIKE siaf:idx
+	LOCAL l_cod_siaf_rec LIKE siaf:codigo_siaf
+	LOCAL l_opmp_jnlok LIKE post:adt_opmp_jnlOK
+	LOCAL l_opmp_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_opmp_pres LIKE post:adt_opmp_PresNro
+	LOCAL l_opmp_codint LIKE post:adt_opmp_codint_mp
+	LOCAL l_opmp_cmd LIKE post:adt_opmp_comandos
+	LOCAL l_opmp_date LIKE post:adt_opmp_fecha
+	LOCAL l_opmp_login LIKE post:adt_opmp_login_id
+	LOCAL l_opmp_term LIKE post:adt_opmp_termi_win
+
+	LET l_hay_opmp = 0
+	LET l_hay_jnl996 = 0
+	LET l_hay_jnl99099 = 0
+	LET l_cod_siaf_rec = 99600
+
+	DPRINT "[DBG][MISCmpRefRecov] inicio fecha[%s] login[%s] term[%s]\n",common:system_date,op:op_login_id,common:window_node
+
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_codint_mp == "SPO" \
+		&& post:adt_opmp_status_p_PS == "processed" \
+		&& post:adt_opmp_jnlOK == "N"
+
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	LET l_retval = CDSRETVAL
+	IF (l_retval == 0) THEN
+		LET l_hay_opmp = 1
+		CDS EXTRACT DSC:post:OperacionesMP_ctx ALL
+		CDS EXTRACT DSC:post:OperacionesMP_ctx \
+			post:adt_opmp_jnlOK \
+			post:adt_opmp_codseq_nro \
+			post:adt_opmp_PresNro \
+			post:adt_opmp_codint_mp \
+			post:adt_opmp_comandos \
+			post:adt_opmp_fecha \
+			post:adt_opmp_login_id \
+			post:adt_opmp_termi_win \
+			post:adt_opmp_cod_siaf
+		LET l_opmp_jnlok = post:adt_opmp_jnlOK
+		LET l_opmp_codseq = post:adt_opmp_codseq_nro
+		LET l_opmp_pres = post:adt_opmp_PresNro
+		LET l_opmp_codint = post:adt_opmp_codint_mp
+		LET l_opmp_cmd = post:adt_opmp_comandos
+		LET l_opmp_date = post:adt_opmp_fecha
+		LET l_opmp_login = post:adt_opmp_login_id
+		LET l_opmp_term = post:adt_opmp_termi_win
+		IF (post:adt_opmp_cod_siaf == 99601) THEN
+			LET l_cod_siaf_rec = 99601
+		END IF
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	DPRINT "[DBG][MISCmpRefRecov] opmp enc[%s] codseq[%s] pres[%s] jnlOK[%s] codint[%s]\n",l_hay_opmp,l_opmp_codseq,l_opmp_pres,l_opmp_jnlok,l_opmp_codint
+	DPRINT "[DBG][MISCmpRefRecov] opmp cmd[%s] fecha[%s] login[%s] term[%s] cod_siaf[%s]\n",l_opmp_cmd,l_opmp_date,l_opmp_login,l_opmp_term,l_cod_siaf_rec
+
+	IF (l_hay_opmp == 0) THEN
+		CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context \
+			WHERE tlr:jnl_bus_date == common:system_date && \
+			siaf:jnl_window_node == common:window_node && \
+			tlr:jnl_op_login_id == op:op_login_id && \
+			post:jnl_opmp_codseq_nro > 0 && \
+			(post:jnl_opmp_ref_status == "processed" || post:jnl_opmp_ref_id.NUMCHARS > 0) && \
+			siaf:codigo_siaf == 99099
+
+		CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+		LET l_retval = CDSRETVAL
+		IF (l_retval == 0) THEN
+			LET l_hay_jnl99099 = 1
+			CDS EXTRACT DSC:tlr:jnl_context \
+				post:jnl_opmp_codseq_nro INTO post:adt_mp_codseq_nro \
+				post:PresNro INTO giros:PresNro_canc
+		END IF
+		CDS ENDSELECT DSC:tlr:jnl_context
+
+		IF (l_hay_jnl99099 == 1) THEN
+			CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context \
+				WHERE tlr:jnl_bus_date == common:system_date && \
+				siaf:jnl_window_node == common:window_node && \
+				tlr:jnl_op_login_id == op:op_login_id && \
+				post:jnl_opmp_codseq_nro == post:adt_mp_codseq_nro && \
+				(siaf:codigo_siaf == 99600 || siaf:codigo_siaf == 99601)
+
+			CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+			IF (CDSRETVAL == 0) THEN
+				LET l_hay_jnl996 = 1
+			END IF
+			CDS ENDSELECT DSC:tlr:jnl_context
+		END IF
+
+		DPRINT "[DBG][MISCmpRefRecov] jnl99099 enc[%s] codseq[%s] pres[%s] login[%s] term[%s]\n",l_hay_jnl99099,post:adt_mp_codseq_nro,giros:PresNro_canc,op:op_login_id,common:window_node
+		DPRINT "[DBG][MISCmpRefRecov] jnl996 enc[%s] cod_siaf[%s]\n",l_hay_jnl996,l_cod_siaf_rec
+	END IF
+
+	IF (l_hay_opmp == 0 && (l_hay_jnl99099 == 0 || l_hay_jnl996 == 1)) THEN
+		DPRINT "[DBG][MISCmpRefRecov] no hay refund incompleto\n"
+		DPRINT "[DBG][MISCmpRefRecov] retorno login sin cambios\n"
+		RETURN 0
+	END IF
+
+	MSGBOX "SE DETECTO UN REEMBOLSO SIN COMPLETARSE POR UNA CAIDA O INTERRUPCION. SE PROCEDE A COMPLETARLO ANTES DE INICIAR EL PROGRAMA",OFB_OK,"AVISO"
+
+	IF (l_hay_opmp == 1) THEN
+		LET post:adt_mp_codseq_nro = l_opmp_codseq
+		LET post:adt_vpi_codseq_nro = l_opmp_codseq
+		LET giros:PresNro_canc = l_opmp_pres
+		LET post:PresNro = l_opmp_pres
+		LET post:adt_tmp_codint_mp = l_opmp_codint
+		LET post:mp_comandos = l_opmp_cmd
+		LET siaf:codigo_siaf = l_cod_siaf_rec
+	ELSE
+		LET post:adt_vpi_codseq_nro = post:adt_mp_codseq_nro
+		LET post:PresNro = giros:PresNro_canc
+		LET siaf:codigo_siaf = l_cod_siaf_rec
+	END IF
+
+	CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+		tlr:jnl_bus_date == common:system_date && \
+		siaf:jnl_window_node == common:window_node && \
+		tlr:jnl_op_login_id == op:op_login_id && \
+		post:jnl_opmp_codseq_nro == post:adt_mp_codseq_nro && \
+		siaf:codigo_siaf == 99099
+	CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		CDS EXTRACT DSC:tlr:jnl_context \
+			post:Total_importe \
+			post:codigo_interno \
+			post:NroCompPago2 \
+			post:Nro_Lote_Pos \
+			post:NroTransac \
+			post:Tipo_Operacion_Pos \
+			post:importe_origen \
+			siaf:moneda \
+			post:codigo_medio_pago \
+			post:DescripMedPag \
+			post:medio_pago_desc \
+			post:codint_tarj_desc
+	END IF
+	CDS ENDSELECT DSC:tlr:jnl_context
+
+	CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+		tlr:jnl_bus_date == common:system_date && \
+		siaf:jnl_window_node == common:window_node && \
+		tlr:jnl_op_login_id == op:op_login_id && \
+		post:jnl_opmp_codseq_nro == post:adt_mp_codseq_nro && \
+		(siaf:codigo_siaf == 99600 || siaf:codigo_siaf == 99601)
+	CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+	LET l_hay_jnl996 = 0
+	IF (CDSRETVAL == 0) THEN
+		LET l_hay_jnl996 = 1
+	END IF
+	CDS ENDSELECT DSC:tlr:jnl_context
+
+	DPRINT "[DBG][MISCmpRefRecov] antes jnl codseq[%s] pres[%s] hay996[%s] cod_siaf[%s]\n",post:adt_mp_codseq_nro,giros:PresNro_canc,l_hay_jnl996,siaf:codigo_siaf
+
+	IF (l_hay_jnl996 == 0) THEN
+		CALL tlr:JNLinitialize
+		CALL siaf:PRESfecha_hora
+		LET tlr:INDdcol_scrn[0] = SCR:post:SCRN99600
+		IF (siaf:codigo_siaf == 99601) THEN
+			LET tlr:INDtran_name = LST:post:TRAN99601
+			LET tlr:INDjnl_append = OFB:post:JNL99601_mpago
+		ELSE
+			LET siaf:codigo_siaf = 99600
+			LET tlr:INDtran_name = LST:post:TRAN99600
+			LET tlr:INDjnl_append = OFB:post:JNL99600
+		END IF
+		CALL post:MISCmuevo_campos_jou
+		CALL siaf:MISClleno_modalidad
+		CLEARFIELD post:PresNro
+		UNGETKEY RT_SEND
+		CALL tlr:JNLtran
+		UNGETKEY RT_SEND
+		RESETFLAG drv:mode_flags,no_stack_list
+	END IF
+
+	CALL post:CDSopmp_jnlOK("REFUND")
+
+	LET l_opmp_jnlok = "N"
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_PresNro == giros:PresNro_canc \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_codseq_nro == post:adt_mp_codseq_nro
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_jnlOK INTO l_opmp_jnlok
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	LET l_hay_jnl996 = 0
+	CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+		tlr:jnl_bus_date == common:system_date && \
+		siaf:jnl_window_node == common:window_node && \
+		tlr:jnl_op_login_id == op:op_login_id && \
+		post:jnl_opmp_codseq_nro == post:adt_mp_codseq_nro && \
+		(siaf:codigo_siaf == 99600 || siaf:codigo_siaf == 99601)
+	CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		LET l_hay_jnl996 = 1
+	END IF
+	CDS ENDSELECT DSC:tlr:jnl_context
+
+	DPRINT "[DBG][MISCmpRefRecov] despues jnlOK[%s] hay996[%s] codseq[%s] pres[%s]\n",l_opmp_jnlok,l_hay_jnl996,post:adt_mp_codseq_nro,giros:PresNro_canc
+
+	MSGBOX "SE COMPLETO EL REEMBOLSO INCONCLUSO",OFB_OK,"AVISO"
+	DPRINT "[DBG][MISCmpRefRecov] retorno login\n"
+
+	RETURN 0
+END SUB
+
+/*******/
