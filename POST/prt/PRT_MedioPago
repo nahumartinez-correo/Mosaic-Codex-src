@@ -99,7 +99,9 @@ SUB post:PRT_MedioPago(LIMP, Importe_Acumulado, Relleno, Largo, Tipo_Impresion)
 						Relleno,Largo,common:csr_string, post:importe_origen					
 				ELSE	
 					//justifico a la derecha
-					FPRINT common:csr_string "\x1Ba\x32%s $%9.9e\n",common:csr_string, post:importe_origen
+					//FPRINT common:csr_string "\x1Ba\x32%s $%9.9e\n",common:csr_string, post:importe_origen
+					//MFM - Se elimina justificacion a la derecha en ticket pues sale desfasado.
+					FPRINT common:csr_string "%s $%9.9e\n",common:csr_string, post:importe_origen
 				END IF
 			END IF
 			CALL post:MISCprt2laser(common:csr_string)

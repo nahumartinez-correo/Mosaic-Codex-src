@@ -15,7 +15,7 @@
 *   NI50546 - Mercado Pago
 * SOURCE
 */
-#include "postmisc.h"
+#include "src\POST\misc\postmisc.h"
 SUB post:MISCmpRefundPayment
 	LOCAL l_retval LIKE lib:err_retval
 	
@@ -60,6 +60,13 @@ SUB post:MISCmpRefundPayment
 	DPRINT "post:mp_tmp_adic[3][%s]\n" post:mp_tmp_adic[3]
 	DPRINT "post:mp_tmp_adic[4][%s]\n" post:mp_tmp_adic[4]
 	
+	// DEVONLY:PAUSE_REFUND_200025 BEGIN
+	// DEVONLY:PAUSE_REFUND_200025 A1
+	IF (post:mp_comandos == "POINT_REFUND_POST" && giros:codigo_procesamiento == 200025) THEN
+		MSGBOX "DEV PAUSE A1: Refund 200025 Host RX (pre-parse)",OFB_OK,"DEV"
+	END IF
+	// DEVONLY:PAUSE_REFUND_200025 END
+	
 	//Rutina generica para el tratamiento de la respuesta de los WS de Mercado Pago
 	CALL post:OFBresponse_ws_mp
 	
@@ -94,6 +101,7 @@ SUB post:MISCmpRefundPayment
 		
 		//Grabo en la tabla OperacionesMP
 		CALL post:MISCsaveOpeMP(post:mp_operacion,post:mp_comandos)
+		
 	ELSE
 		DPRINT "post:mp_response_code[%s]\n" post:mp_response_code
 		DPRINT "post:mp_status][%s]\n" post:mp_status
@@ -102,6 +110,7 @@ SUB post:MISCmpRefundPayment
 		DPRINT "post:mp_response_cause][%s]\n" post:mp_response_cause
 		
 		LET l_retval = -2
+
 	END IF
 	
 	RETURN l_retval

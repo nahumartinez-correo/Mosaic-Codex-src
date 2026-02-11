@@ -164,7 +164,10 @@ SUB post:SVAL99600_mpago
 	IF (!TESTFLAG(tlr:tran_flags,correction)) THEN
 		SETFLAG tlr:tran_flags,correction
 	END IF
-	CALL post:MISCticko_MP
+	// Solo se imprime para QR integrado
+	IF ( l_es_point == 0 ) THEN
+		CALL post:MISCticko_MP
+	END IF
 	
 	RESETFLAG tlr:tran_flags,correction
 	

@@ -1,0 +1,244 @@
+/****o* Mercado Pago/OFB:post:MISCmpFinalRefundInc
+* NOMBRE
+*   OFB:post:MISCmpFinalRefundInc
+* DESCRIPCION
+*   Completa refund Smart Point incompleto al iniciar login
+* SOURCE
+*/
+#include "src\POST\misc\postmisc.h"
+
+SUB post:MISCmpFinalRefundInc
+	LOCAL l_retval LIKE lib:err_retval
+	LOCAL l_dbret LIKE lib:err_retval
+	LOCAL l_jnlret LIKE lib:err_retval
+	LOCAL l_need_jnl LIKE lib:err_retval
+	LOCAL l_codsiaf LIKE siaf:codigo_siaf
+	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_pres LIKE post:adt_opmp_PresNro
+	LOCAL l_refst LIKE post:mp_refund_status
+	LOCAL l_refps LIKE post:mp_refund_id_PS
+	LOCAL l_ordps LIKE post:mp_order_id_PS
+	LOCAL l_jnlok LIKE post:adt_opmp_jnlOK
+	LOCAL l_amt LIKE post:adt_opmp_amount
+	LOCAL l_codint LIKE post:adt_opmp_codint_mp
+	LOCAL l_aux_cod LIKE siaf:codigo_siaf
+
+	LET l_need_jnl = 0
+
+	DPRINT "[DBG] FinRefInc: ini fec=[%s] log=[%s] ter=[%s]\n" common:system_date op:op_login_id common:window_node
+
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+		&& post:adt_opmp_codint_mp != "QRI" \
+		&& post:adt_opmp_status_p_PS != "canceled"
+
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	LET l_dbret = CDSRETVAL
+	IF (l_dbret != 0) THEN
+		CDS ENDSELECT DSC:post:OperacionesMP_ctx
+		DPRINT "[DBG] FinRefInc: sin pendiente\n"
+		RETURN -2
+	END IF
+
+	CDS EXTRACT DSC:post:OperacionesMP_ctx \
+		post:adt_opmp_codseq_nro \
+		post:adt_opmp_PresNro \
+		post:adt_opmp_jnlOK \
+		post:adt_opmp_cod_siaf \
+		post:adt_opmp_codint_mp \
+		post:adt_opmp_order_id_PS \
+		post:adt_opmp_ref_id_PS \
+		post:adt_opmp_ref_st_PS \
+		post:adt_opmp_st_det_PS \
+		post:adt_opmp_amount
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	LET l_codseq = post:adt_opmp_codseq_nro
+	LET l_pres = post:adt_opmp_PresNro
+	LET l_amt = post:adt_opmp_amount
+	LET l_codint = post:adt_opmp_codint_mp
+
+	CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_order,LST:post:LISTget_opmp_order)
+	CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_payment,LST:post:LISTget_opmp_payment)
+	CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_refund,LST:post:LISTget_opmp_refund)
+
+	IF (post:mp_order_id_PS.NUMCHARS == 0 && post:adt_opmp_order_id_PS.NUMCHARS > 0) THEN
+		LET post:mp_order_id_PS = post:adt_opmp_order_id_PS
+	END IF
+	IF (post:mp_refund_id_PS.NUMCHARS == 0 && post:adt_opmp_ref_id_PS.NUMCHARS > 0) THEN
+		LET post:mp_refund_id_PS = post:adt_opmp_ref_id_PS
+	END IF
+	IF (post:mp_refund_status_PS.NUMCHARS == 0 && post:adt_opmp_ref_st_PS.NUMCHARS > 0) THEN
+		LET post:mp_refund_status_PS = post:adt_opmp_ref_st_PS
+	END IF
+	IF (post:mp_status_detail_PS.NUMCHARS == 0 && post:adt_opmp_st_det_PS.NUMCHARS > 0) THEN
+		LET post:mp_status_detail_PS = post:adt_opmp_st_det_PS
+	END IF
+	IF (post:mp_refund_status.NUMCHARS == 0) THEN
+		LET post:mp_refund_status = post:mp_refund_status_PS
+	END IF
+
+	LET l_ordps = post:mp_order_id_PS
+	LET l_refps = post:mp_refund_id_PS
+	LET l_refst = post:mp_refund_status
+
+	DPRINT "[DBG] FinRefInc: dat cod=[%s] pre=[%s] jnl=[%s] cin=[%s]\n" l_codseq l_pres post:adt_opmp_jnlOK l_codint
+	DPRINT "[DBG] FinRefInc: ids ord=[%s] ref=[%s] st=[%s] imp=[%s]\n" l_ordps l_refps l_refst l_amt
+
+	IF (l_ordps.NUMCHARS == 0 || l_refps.NUMCHARS == 0) THEN
+		DPRINT "[DBG] FinRefInc: faltan ids ord=[%s] ref=[%s]\n" l_ordps l_refps
+		RETURN -2
+	END IF
+	IF (l_refst.NUMCHARS > 0 && l_refst != "processed") THEN
+		DPRINT "[DBG] FinRefInc: status invalido st=[%s]\n" l_refst
+		RETURN -2
+	END IF
+
+	IF (post:adt_opmp_cod_siaf == 99601) THEN
+		LET l_codsiaf = 99601
+	ELSE
+		LET l_codsiaf = 99600
+	END IF
+
+	CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+		tlr:jnl_bus_date == common:system_date && \
+		siaf:jnl_window_node == common:window_node && \
+		siaf:codigo_siaf == l_codsiaf && \
+		post:PresNro == l_pres && \
+		siaf:moneda == "06" && \
+		tlr:jnl_op_login_id == op:op_login_id && \
+		post:jnl_opmp_codseq_nro == l_codseq
+
+	CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+	LET l_jnlret = CDSRETVAL
+	CDS ENDSELECT DSC:tlr:jnl_context
+
+	IF (l_jnlret != 0) THEN
+		LET l_need_jnl = 1
+	END IF
+
+	LET l_aux_cod = siaf:codigo_siaf
+
+	IF (l_need_jnl == 1) THEN
+		DPRINT "[DBG] FinRefInc: genero jnl cod=[%s] pre=[%s] cods=[%s]\n" l_codseq l_pres l_codsiaf
+
+		LET post:adt_vpi_codseq_nro = l_codseq
+		LET post:adt_mp_codseq_nro = l_codseq
+		LET post:adt_opmp_codseq_nro = l_codseq
+		LET post:PresNro = l_pres
+		LET giros:PresNro_canc = l_pres
+		LET post:adt_tmp_codint_mp = l_codint
+		LET post:mp_codint_mp = l_codint
+		LET post:mp_comandos = "POINT_REFUND_POST"
+		LET post:mp_operacion = "DEV"
+		LET post:NroCompPago2AN = l_refps
+		LET post:Nro_Lote_PosAN = l_ordps
+		LET post:NroTransacAN = post:adt_opmp_auth_code
+
+		IF (post:Total_importe == 0) THEN
+			LET post:Total_importe = post:adt_opmp_amount / 100
+		END IF
+		IF (post:codigo_interno == 0) THEN
+			LET post:codigo_interno = 130410
+		END IF
+		IF (post:NroCompPago2.NUMCHARS == 0) THEN
+			LET post:NroCompPago2 = post:adt_opmp_payment_id
+		END IF
+		IF (post:Nro_Lote_Pos.NUMCHARS == 0) THEN
+			LET post:Nro_Lote_Pos = post:adt_opmp_order_id
+		END IF
+		IF (post:NroTransac.NUMCHARS == 0) THEN
+			LET post:NroTransac = post:adt_opmp_auth_code
+		END IF
+		IF (post:Tipo_Operacion_Pos.NUMCHARS == 0) THEN
+			LET post:Tipo_Operacion_Pos = "ONLINE"
+		END IF
+		IF (post:importe_origen == 0) THEN
+			LET post:importe_origen = post:adt_opmp_amount / 100
+		END IF
+		IF (post:codigo_medio_pago.NUMCHARS == 0) THEN
+			LET post:codigo_medio_pago = "06"
+		END IF
+		IF (siaf:moneda.NUMCHARS == 0) THEN
+			LET siaf:moneda = "06"
+		END IF
+		LET siaf:importe = post:Total_importe
+
+		CALL tlr:JNLinitialize
+		LET siaf:codigo_siaf = l_codsiaf
+		CALL siaf:PRESfecha_hora
+		IF (RETVAL < 0) THEN
+			LET siaf:codigo_siaf = l_aux_cod
+			DPRINT "[DBG] FinRefInc: fallo fecha_hora cod=[%s] pre=[%s]\n" l_codseq l_pres
+			RETURN -2
+		END IF
+
+		tlr:INDdcol_scrn[0] = SCR:post:SCRN99600
+		IF (l_codsiaf == 99601) THEN
+			tlr:INDtran_name = LST:post:TRAN99601
+			tlr:INDjnl_append = OFB:post:JNL99601_mpago
+		ELSE
+			tlr:INDtran_name = LST:post:TRAN99600
+			tlr:INDjnl_append = OFB:post:JNL99600
+		END IF
+
+		CALL post:MISCmuevo_campos_jou
+		CALL siaf:MISClleno_modalidad
+
+		CLEARFIELD post:PresNro
+		UNGETKEY RT_SEND
+		CALL tlr:JNLtran
+		UNGETKEY RT_SEND
+		RESETFLAG drv:mode_flags,no_stack_list
+	END IF
+
+	LET post:PresNro = l_pres
+	LET post:adt_vpi_codseq_nro = l_codseq
+	LET post:adt_opmp_codint_mp = l_codint
+	CALL post:CDSopmp_jnlOK("REFUND")
+	LET l_retval = RETVAL
+
+	LET siaf:codigo_siaf = l_aux_cod
+
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_codseq_nro == l_codseq
+
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_jnlOK INTO l_jnlok
+	ELSE
+		CLEARFIELD l_jnlok
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+		tlr:jnl_bus_date == common:system_date && \
+		siaf:jnl_window_node == common:window_node && \
+		siaf:codigo_siaf == l_codsiaf && \
+		post:PresNro == l_pres && \
+		siaf:moneda == "06" && \
+		tlr:jnl_op_login_id == op:op_login_id && \
+		post:jnl_opmp_codseq_nro == l_codseq
+	CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+	LET l_jnlret = CDSRETVAL
+	CDS ENDSELECT DSC:tlr:jnl_context
+
+	DPRINT "[DBG] FinRefInc: fin cod=[%s] pre=[%s] jok=[%s] rv=[%d]\n" l_codseq l_pres l_jnlok l_retval
+	DPRINT "[DBG] FinRefInc: jnl cods=[%s] exi=[%d] gen=[%d]\n" l_codsiaf l_jnlret l_need_jnl
+
+	IF (l_jnlok == "S" && l_jnlret == 0) THEN
+		RETURN 0
+	END IF
+
+	RETURN -2
+
+END SUB
+
+/*******/
