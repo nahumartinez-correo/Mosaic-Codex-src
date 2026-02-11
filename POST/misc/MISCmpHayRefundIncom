@@ -12,10 +12,29 @@ SUB post:MISCmpHayRefundIncom
 	LOCAL l_jnlret LIKE lib:err_retval
 	LOCAL l_found LIKE lib:err_retval
 	LOCAL l_codsiaf LIKE siaf:codigo_siaf
+	LOCAL l_jok LIKE post:adt_opmp_jnlOK
+	LOCAL l_cmd LIKE post:adt_opmp_comandos
+	LOCAL l_cod LIKE post:adt_opmp_codseq_nro
+	LOCAL l_pre LIKE post:adt_opmp_PresNro
+	LOCAL l_codint LIKE post:adt_opmp_codint_mp
+	LOCAL l_ordps LIKE post:adt_opmp_order_id_PS
+	LOCAL l_refps LIKE post:adt_opmp_ref_id_PS
+	LOCAL l_refst LIKE post:adt_opmp_ref_st_PS
+	LOCAL l_refdt LIKE post:adt_opmp_st_det_PS
+	LOCAL l_amt LIKE post:adt_opmp_amount
 
 	LET l_found = -2
+	CLEARFIELD post:rf_cod
+	CLEARFIELD post:rf_pre
+	CLEARFIELD post:rf_ordps
+	CLEARFIELD post:rf_refps
+	CLEARFIELD post:rf_stps
+	CLEARFIELD post:rf_detps
+	CLEARFIELD post:rf_amt
+	CLEARFIELD post:rf_codint
 
-	DPRINT "[DBG] HayRefInc: ini fec=[%s] log=[%s] ter=[%s] op=[DEV] cmd=[POINT_REFUND_POST]\n" common:system_date op:op_login_id common:window_node
+	DPRINT "[DBG] HayRefInc: ini fec=[%s] log=[%s] ter=[%s]\n" common:system_date op:op_login_id common:window_node
+	DPRINT "[DBG] HayRefInc: flt op=[DEV] cmd=[POINT_REFUND_POST] codint!=[QRI]\n"
 
 	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
 		WHERE post:adt_opmp_fecha == common:system_date \
@@ -39,67 +58,130 @@ SUB post:MISCmpHayRefundIncom
 			post:adt_opmp_order_id_PS \
 			post:adt_opmp_ref_id_PS \
 			post:adt_opmp_ref_st_PS \
+			post:adt_opmp_st_det_PS \
 			post:adt_opmp_amount
-		LET l_found = 0
-		DPRINT "[DBG] HayRefInc: por jnl cod=[%s] pre=[%s] jnl=[%s] codint=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro post:adt_opmp_jnlOK post:adt_opmp_codint_mp
-		DPRINT "[DBG] HayRefInc: ids ord=[%s] ref=[%s] st=[%s] imp=[%s]\n" post:adt_opmp_order_id_PS post:adt_opmp_ref_id_PS post:adt_opmp_ref_st_PS post:adt_opmp_amount
+
+		LET l_cod = post:adt_opmp_codseq_nro
+		LET l_pre = post:adt_opmp_PresNro
+		LET l_jok = post:adt_opmp_jnlOK
+		LET l_codint = post:adt_opmp_codint_mp
+		LET l_ordps = post:adt_opmp_order_id_PS
+		LET l_refps = post:adt_opmp_ref_id_PS
+		LET l_refst = post:adt_opmp_ref_st_PS
+		LET l_refdt = post:adt_opmp_st_det_PS
+		LET l_amt = post:adt_opmp_amount
+
+		IF (post:adt_opmp_cod_siaf == 99601) THEN
+			LET l_codsiaf = 99601
+		ELSE
+			LET l_codsiaf = 99600
+		END IF
+
+		CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+			tlr:jnl_bus_date == common:system_date && \
+			siaf:jnl_window_node == common:window_node && \
+			siaf:codigo_siaf == l_codsiaf && \
+			post:PresNro == l_pre && \
+			siaf:moneda == "06" && \
+			tlr:jnl_op_login_id == op:op_login_id && \
+			post:jnl_opmp_codseq_nro == l_cod
+
+		CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+		LET l_jnlret = CDSRETVAL
+		CDS ENDSELECT DSC:tlr:jnl_context
+
+		DPRINT "[DBG] HayRefInc: opmp cod=[%s] pre=[%s] jok=[%s] cin=[%s]\n" l_cod l_pre l_jok l_codint
+		DPRINT "[DBG] HayRefInc: ids ord=[%s] ref=[%s] st=[%s]\n" l_ordps l_refps l_refst
+		DPRINT "[DBG] HayRefInc: ids det=[%s] amt=[%s] jnlrv=[%d]\n" l_refdt l_amt l_jnlret
+
+		IF (l_jok != "S" || l_jnlret != 0) THEN
+			LET l_found = 0
+			LET post:rf_cod = l_cod
+			LET post:rf_pre = l_pre
+			LET post:rf_ordps = l_ordps
+			LET post:rf_refps = l_refps
+			LET post:rf_stps = l_refst
+			LET post:rf_detps = l_refdt
+			LET post:rf_amt = l_amt
+			LET post:rf_codint = l_codint
+			DPRINT "[DBG] HayRefInc: save cod=[%s] pre=[%s] ord=[%s]\n" post:rf_cod post:rf_pre post:rf_ordps
+			DPRINT "[DBG] HayRefInc: save ref=[%s] st=[%s] amt=[%s]\n" post:rf_refps post:rf_stps post:rf_amt
+		END IF
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
 	IF (l_found != 0) THEN
-		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-			WHERE post:adt_opmp_fecha == common:system_date \
-			&& post:adt_opmp_termi_win == common:window_node \
-			&& post:adt_opmp_login_id == op:op_login_id \
-			&& post:adt_opmp_operacion == "DEV" \
-			&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
-			&& post:adt_opmp_codint_mp != "QRI" \
-			&& post:adt_opmp_status_p_PS != "canceled"
+		DPRINT "[DBG] HayRefInc: sin opmp, reviso jnl\n"
+		CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+			tlr:jnl_bus_date == common:system_date && \
+			siaf:jnl_window_node == common:window_node && \
+			(siaf:codigo_siaf == 99600 || siaf:codigo_siaf == 99601) && \
+			siaf:moneda == "06" && \
+			tlr:jnl_op_login_id == op:op_login_id && \
+			post:jnl_opmp_codseq_nro > 0
 
-		CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-		LET l_retval = CDSRETVAL
-		IF (l_retval == 0) THEN
-			CDS EXTRACT DSC:post:OperacionesMP_ctx \
-				post:adt_opmp_codseq_nro \
-				post:adt_opmp_PresNro \
-				post:adt_opmp_jnlOK \
-				post:adt_opmp_cod_siaf \
-				post:adt_opmp_order_id_PS \
-				post:adt_opmp_ref_id_PS \
-				post:adt_opmp_ref_st_PS \
-				post:adt_opmp_amount
-
-			IF (post:adt_opmp_cod_siaf == 99601) THEN
-				LET l_codsiaf = 99601
-			ELSE
-				LET l_codsiaf = 99600
-			END IF
-
-			CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
-				tlr:jnl_bus_date == common:system_date && \
-				siaf:jnl_window_node == common:window_node && \
-				siaf:codigo_siaf == l_codsiaf && \
-				post:PresNro == post:adt_opmp_PresNro && \
-				siaf:moneda == "06" && \
-				tlr:jnl_op_login_id == op:op_login_id && \
-				post:jnl_opmp_codseq_nro == post:adt_opmp_codseq_nro
-
-			CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
-			LET l_jnlret = CDSRETVAL
-			CDS ENDSELECT DSC:tlr:jnl_context
-
-			IF (l_jnlret != 0) THEN
-				LET l_found = 0
-				DPRINT "[DBG] HayRefInc: falta jnl cod=[%s] pre=[%s] cods=[%s] jnl=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro l_codsiaf post:adt_opmp_jnlOK
-				DPRINT "[DBG] HayRefInc: ids ord=[%s] ref=[%s] st=[%s] imp=[%s]\n" post:adt_opmp_order_id_PS post:adt_opmp_ref_id_PS post:adt_opmp_ref_st_PS post:adt_opmp_amount
-			END IF
+		CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+		LET l_jnlret = CDSRETVAL
+		IF (l_jnlret == 0) THEN
+			CDS EXTRACT DSC:tlr:jnl_context post:jnl_opmp_codseq_nro post:PresNro siaf:codigo_siaf
+			LET l_cod = post:jnl_opmp_codseq_nro
+			LET l_pre = post:PresNro
+			LET l_codsiaf = siaf:codigo_siaf
 		END IF
-		CDS ENDSELECT DSC:post:OperacionesMP_ctx
+		CDS ENDSELECT DSC:tlr:jnl_context
+
+		IF (l_jnlret == 0) THEN
+			CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+				WHERE post:adt_opmp_fecha == common:system_date \
+				&& post:adt_opmp_termi_win == common:window_node \
+				&& post:adt_opmp_login_id == op:op_login_id \
+				&& post:adt_opmp_codseq_nro == l_cod \
+				&& post:adt_opmp_PresNro == l_pre \
+				&& post:adt_opmp_operacion == "DEV" \
+				&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+				&& post:adt_opmp_codint_mp != "QRI"
+
+			CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+			LET l_retval = CDSRETVAL
+			IF (l_retval == 0) THEN
+				CDS EXTRACT DSC:post:OperacionesMP_ctx \
+					post:adt_opmp_jnlOK \
+					post:adt_opmp_codint_mp \
+					post:adt_opmp_order_id_PS \
+					post:adt_opmp_ref_id_PS \
+					post:adt_opmp_ref_st_PS \
+					post:adt_opmp_st_det_PS \
+					post:adt_opmp_amount \
+					post:adt_opmp_comandos
+
+				LET l_jok = post:adt_opmp_jnlOK
+				LET l_cmd = post:adt_opmp_comandos
+				LET l_codint = post:adt_opmp_codint_mp
+				LET l_ordps = post:adt_opmp_order_id_PS
+				LET l_refps = post:adt_opmp_ref_id_PS
+				LET l_refst = post:adt_opmp_ref_st_PS
+				LET l_refdt = post:adt_opmp_st_det_PS
+				LET l_amt = post:adt_opmp_amount
+
+				IF (l_jok != "S") THEN
+					LET l_found = 0
+					LET post:rf_cod = l_cod
+					LET post:rf_pre = l_pre
+					LET post:rf_ordps = l_ordps
+					LET post:rf_refps = l_refps
+					LET post:rf_stps = l_refst
+					LET post:rf_detps = l_refdt
+					LET post:rf_amt = l_amt
+					LET post:rf_codint = l_codint
+					DPRINT "[DBG] HayRefInc: jnl cod=[%s] pre=[%s] cods=[%s]\n" l_cod l_pre l_codsiaf
+					DPRINT "[DBG] HayRefInc: opmp jok=[%s] cmd=[%s] cin=[%s]\n" l_jok l_cmd l_codint
+				END IF
+			END IF
+			CDS ENDSELECT DSC:post:OperacionesMP_ctx
+		END IF
 	END IF
 
 	IF (l_found != 0) THEN
-		CLEARFIELD post:adt_opmp_codseq_nro
-		CLEARFIELD post:adt_opmp_PresNro
 		DPRINT "[DBG] HayRefInc: sin refund incompleto\n"
 	END IF
 

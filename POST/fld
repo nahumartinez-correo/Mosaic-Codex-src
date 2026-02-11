@@ -7552,3 +7552,12 @@ adt_stockp_pas_hh  ASCII 1 ~ ~ scDEascurdmPbdha 0 0 0 0 0 0 0 //PIEZA ENTREGADA 
 desc_impre_tm ASCII 80 1 ~ SCdEAscUrDmpbdha 0 0 0 0 0 0 0
 //CM a SAP
 sap_cli_franq ASCII 1 10 ~ SCDEascUrDmpbDha 0 0 0 0 0 0 0 // Se resguarda la variable que indica si el cliente corporativo franquea (S/N)
+
+rf_cod NUMERIC 8 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0
+rf_pre NUMERIC 11 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0
+rf_ordps ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0
+rf_refps ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0
+rf_stps ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0
+rf_detps ASCII 30 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0
+rf_amt ASCII 12 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0
+rf_codint ASCII 3 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0

@@ -1,18 +1,18 @@
-/****o* Pendientes de agrupaciÛn/OFB:op:TRANlogin
+/****o* Pendientes de agrupaci√≥n/OFB:op:TRANlogin
 * NOMBRE
 *   OFB:op:TRANlogin
 * DESCRIPCION
 *   Rutina que se ejecuta cuando el usuario se loguea en MOSAIC
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   DocumentaciÛn relevante que deber· ser actualizada por la modificaciÛn de la rutina
+*   Documentaci√≥n relevante que deber√° ser actualizada por la modificaci√≥n de la rutina
 * SOURCE
 */
 #include "optran.h"
@@ -174,7 +174,7 @@ SUB op:TRANlogin
 	;SMC paso todo a mayusculas
 	CALL csr:fld_to_upper(op:op_login_id)
 	
-	; Se parametrizÛ la clave clave_sf1 en el DDPROJ.INI para adecuaciones para el RTJAVA *** MDG
+	; Se parametriz√≥ la clave clave_sf1 en el DDPROJ.INI para adecuaciones para el RTJAVA *** MDG
 	CALL csr:get_profile_string "SF1" "clave_sf1" common:sf1_clave
     
 	PROTFIELD op_login_id
@@ -605,8 +605,8 @@ SUB op:TRANlogin
 		RESETFLAG drv:mode_flags,no_stack_list
 	END IF
 
-  /*Se agrega el chequeo para saber si los procesos de anulaciÛn quedaron inconclusos
-  (Nota de CrÈdito) - Gabriel Falciola*/
+  /*Se agrega el chequeo para saber si los procesos de anulaci√≥n quedaron inconclusos
+  (Nota de Cr√©dito) - Gabriel Falciola*/
   CLEARFIELD post:adt_cativa_discri
   CALL post:CDSverifRelCorr
   CALL post:MISCtermina_anula
@@ -644,7 +644,7 @@ SUB op:TRANlogin
 	//gpb:NI50567
 	common:cantidad_compOPW = post:adt_dgralsuc_compOPW
 
-	//gpb:PS10705 Se parametrizÛ el tiempo de espera (seccion "SLEEPFACTURA" clave "time" en el DDPROJ.INI) 
+	//gpb:PS10705 Se parametriz√≥ el tiempo de espera (seccion "SLEEPFACTURA" clave "time" en el DDPROJ.INI) 
 	//para las impresiones de facturas/ticket por DOCPRT
 	common:sleep_factura = 0
   CALL csr:get_profile_string "SLEEPFACTURA" "time" common:sleep_factura
@@ -655,7 +655,7 @@ SUB op:TRANlogin
 		ELSE
 			CALL post:MISCesNumerico(common:sleep_factura)
 			IF (RETVAL != 0) THEN
-				MSGBOX "Debe ingresar valores numÈricos en la seccion [SEELEPFACTURA] en el DDPROJ.ini.\nSe setea el valor en cero.",OFB_OK,"ATENCION"
+				MSGBOX "Debe ingresar valores num√©ricos en la seccion [SEELEPFACTURA] en el DDPROJ.ini.\nSe setea el valor en cero.",OFB_OK,"ATENCION"
 				common:sleep_factura = 0
 			END IF				
 		END IF
@@ -696,6 +696,18 @@ SUB op:TRANlogin
 		common:adt_mp_termi_integ = "N"
 	END IF
 
+	DPRINT "[DBG] LoginRefInc: ini mp=[%s] fec=[%s] log=[%s]\n" common:adt_mp_termi_integ common:system_date op:op_login_id
+	DPRINT "[DBG] LoginRefInc: ini ter=[%s]\n" common:window_node
+	IF (common:adt_mp_termi_integ == "S") THEN
+		CALL post:MISCmpHayRefundIncom
+		DPRINT "[DBG] LoginRefInc: hay rv=[%d] cod=[%s] pre=[%s]\n" RETVAL post:rf_cod post:rf_pre
+		IF (RETVAL == 0) THEN
+			MSGBOX "SE DETECTO UN REFUND INCOMPLETO POR UNA CAIDA. SE PROCEDERA A FINALIZARLO AUTOMATICAMENTE.",OFB_OK,"ATENCION"
+			CALL post:MISCmpFinalRefundInc
+			DPRINT "[DBG] LoginRefInc: fin rv=[%d] cod=[%s] pre=[%s]\n" RETVAL post:rf_cod post:rf_pre
+		END IF
+	END IF
+
 		//gpb:PS- 10951
 		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
 ;;	//gbp:NI50546 Mercado Pago
@@ -704,7 +716,7 @@ SUB op:TRANlogin
 ;;  	CALL post:MISCmpVerifCaidas
 ;;  END IF
 	
-	//Verifico si quedÚ incloncluso un cierre de Lote por Caida del RT y de ser asi termino la journalizacion
+	//Verifico si qued√≤ incloncluso un cierre de Lote por Caida del RT y de ser asi termino la journalizacion
 	IF (post:codigo_tx == 9030 || post:codigo_tx == 9035)
 		//9030 Cabecera Cierre Lote
 		//9035 Detalle Cierre Lote
@@ -716,7 +728,7 @@ SUB op:TRANlogin
 	//50387 - IPS - mgi REQ 6
 	//Paso a memoria el  valor de Oficina de carga defautl de IPS
 	common:ips_officeCD = giros:adt_dgralsuc_office
-	/* MLD Muevo a un campo no autoclear la cant de dias para depuraciÛn */
+	/* MLD Muevo a un campo no autoclear la cant de dias para depuraci√≥n */
 	giros:giros_dias_bajch = giros:adt_dgralsuc_bajch
 	; Campos que indican si los campos cta y nro de cheque obligan a
 	; ingresar ceros a izquierda *** MDG
