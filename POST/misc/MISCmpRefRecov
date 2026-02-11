@@ -37,6 +37,9 @@ SUB post:MISCmpRefRecov
 	LOCAL l_medio_pago_desc LIKE post:medio_pago_desc
 	LOCAL l_codint_tarj_desc LIKE post:codint_tarj_desc
 	LOCAL l_cod_siaf_dev LIKE siaf:codigo_siaf
+	LOCAL l_codseq_anul LIKE post:jnl_opmp_codseq_nro
+	LOCAL l_verif_ret LIKE lib:err_retval
+	LOCAL l_resell_ret LIKE lib:err_retval
 
 	LET l_has_pending = -2
 	CLEARFIELD l_codseq
@@ -89,7 +92,7 @@ SUB post:MISCmpRefRecov
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
-	IF (l_has_pending != 0) THEN
+	IF (l_has_pending == 0) THEN
 		CLEARFIELD l_jnl_codseq
 		CLEARFIELD l_jnl_pres
 		CLEARFIELD l_jnl_siaf
@@ -346,15 +349,12 @@ SUB post:MISCmpRefRecov
 		CDS ENDSELECT DSC:post:OperacionesMP_ctx
 		DPRINT "[DBG] RefRecov: fin db cod=[%s] pre=[%s] jnl=[%s]\n" l_codseq l_pres l_jnlok
 
-		IF (l_rec_ret == 0 && l_jnlok == "S") THEN
-			MSGBOX "SE COMPLETO EL REEMBOLSO INCONCLUSO",OFB_OK,"AVISO"
-			RETURN 0
-		END IF
-
-		DPRINT "[DBG] RefRecov: fallback tipo_caida cod=[%s] pre=[%s] jnl=[%s]\n" l_codseq l_pres l_jnlok
-		CALL post:MISCmpTipoCaida("DEV")
-		LET l_rec_ret = RETVAL
-		DPRINT "[DBG] RefRecov: fallback ret=[%d]\n" l_rec_ret
+			IF (!(l_rec_ret == 0 && l_jnlok == "S")) THEN
+				DPRINT "[DBG] RefRecov: fallback tipo_caida cod=[%s] pre=[%s] jnl=[%s]\n" l_codseq l_pres l_jnlok
+				CALL post:MISCmpTipoCaida("DEV")
+				LET l_rec_ret = RETVAL
+				DPRINT "[DBG] RefRecov: fallback ret=[%d]\n" l_rec_ret
+			END IF
 
 		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
 			WHERE post:adt_opmp_fecha == common:system_date \
@@ -367,10 +367,57 @@ SUB post:MISCmpRefRecov
 		END IF
 		CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
-		IF (l_rec_ret == 0 && l_jnlok == "S") THEN
-			MSGBOX "SE COMPLETO EL REEMBOLSO INCONCLUSO",OFB_OK,"AVISO"
-			RETURN 0
-		END IF
+			CLEARFIELD l_codseq_anul
+			LET l_verif_ret = -2
+			LET l_resell_ret = -2
+
+			CDS SELECT FROM DSC:tlr:TABjnl BECOMES DSC:tlr:jnl_context WHERE \
+				tlr:jnl_bus_date == common:system_date && \
+				siaf:codigo_siaf == 99099 && \
+				siaf:moneda == "06" && \
+				post:PresNro == l_pres && \
+				tlr:jnl_op_login_id == op:op_login_id && \
+				siaf:jnl_window_node == common:window_node
+			CDS FINDFIRST DSC:tlr:jnl_context NOLOCK
+			LET l_loc_jnl_ret = CDSRETVAL
+			IF (l_loc_jnl_ret == 0) THEN
+				CDS EXTRACT DSC:tlr:jnl_context post:jnl_opmp_codseq_nro INTO l_codseq_anul
+			END IF
+			CDS ENDSELECT DSC:tlr:jnl_context
+			DPRINT "[DBG] RefRecov: key99099 pre=[%s] cod_ref=[%s] cod_an=[%s]\n" l_pres l_codseq l_codseq_anul
+			DPRINT "[DBG] RefRecov: key99099 rv=[%d]\n" l_loc_jnl_ret
+
+			LET giros:PresNro_canc = l_pres
+			IF (l_codseq_anul.NUMCHARS != 0) THEN
+				LET post:adt_mp_codseq_nro = l_codseq_anul
+			ELSE
+				LET post:adt_mp_codseq_nro = l_codseq
+			END IF
+			DPRINT "[DBG] RefRecov: verif pre pre=[%s] cod=[%s]\n" giros:PresNro_canc post:adt_mp_codseq_nro
+			CALL post:CDSopmp_verif_jnlOK("DEV")
+			LET l_verif_ret = RETVAL
+			DPRINT "[DBG] RefRecov: verif pre rv=[%d]\n" l_verif_ret
+
+			IF (l_verif_ret != 0 && l_codseq_anul.NUMCHARS != 0) THEN
+				LET post:PresNro = l_pres
+				LET post:adt_vpi_codseq_nro = l_codseq_anul
+				LET post:adt_opmp_codint_mp = l_codint
+				DPRINT "[DBG] RefRecov: seal alin pre=[%s] cod=[%s]\n" post:PresNro post:adt_vpi_codseq_nro
+				CALL post:CDSopmp_jnlOK("REFUND")
+				LET l_resell_ret = RETVAL
+				DPRINT "[DBG] RefRecov: seal alin rv=[%d]\n" l_resell_ret
+
+				LET giros:PresNro_canc = l_pres
+				LET post:adt_mp_codseq_nro = l_codseq_anul
+				CALL post:CDSopmp_verif_jnlOK("DEV")
+				LET l_verif_ret = RETVAL
+				DPRINT "[DBG] RefRecov: verif pos rv=[%d] pre=[%s] cod=[%s]\n" l_verif_ret giros:PresNro_canc post:adt_mp_codseq_nro
+			END IF
+
+			IF (l_verif_ret == 0) THEN
+				MSGBOX "SE COMPLETO EL REEMBOLSO INCONCLUSO",OFB_OK,"AVISO"
+				RETURN 0
+			END IF
 
 		MSGBOX "NO SE PUDO COMPLETAR EL REEMBOLSO INCONCLUSO. CONTINUE CON EL LOGIN.",OFB_OK,"AVISO"
 		RETURN -2
