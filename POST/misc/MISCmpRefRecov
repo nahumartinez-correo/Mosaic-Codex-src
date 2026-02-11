@@ -19,8 +19,10 @@ SUB post:MISCmpRefRecov
 	LOCAL l_jnl_pres LIKE post:PresNro
 	LOCAL l_jnlret LIKE lib:err_retval
 	LOCAL l_has_pending LIKE lib:err_retval
+	LOCAL l_local_seal LIKE lib:err_retval
 
 	LET l_has_pending = -2
+	LET l_local_seal = -2
 	CLEARFIELD l_codseq
 	CLEARFIELD l_pres
 	CLEARFIELD l_jnlok
@@ -143,12 +145,26 @@ SUB post:MISCmpRefRecov
 
 	IF (l_has_pending == 0) THEN
 		MSGBOX "SE DETECTO UN REEMBOLSO SIN COMPLETARSE POR UNA CAIDA O INTERRUPCION. SE PROCEDE A COMPLETARLO ANTES DE INICIAR EL PROGRAMA",OFB_OK,"AVISO"
-		DPRINT "[DBG] RefRecov: pre-dev cod=[%s] pre=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro
-		DPRINT "[DBG] RefRecov: pre-dev cin=[%s] jnl=[%s] cmd=[%s]\n" post:adt_opmp_codint_mp post:adt_opmp_jnlOK post:adt_opmp_comandos
+		DPRINT "[DBG] RefRecov: pre-dev cod=[%s] pre=[%s] cin=[%s] cmd=[%s] jnl=[%s]\n" l_codseq l_pres l_codint l_cmd l_jnlok
 
-		CALL post:MISCmpTipoCaida("DEV")
-		LET l_rec_ret = RETVAL
-		DPRINT "[DBG] RefRecov: ret dev=[%d]\n" l_rec_ret
+		IF (l_jnlret == 0 && l_jnl_codseq == l_codseq) THEN
+			LET post:PresNro = l_pres
+			LET post:adt_vpi_codseq_nro = l_codseq
+			LET post:adt_opmp_codseq_nro = l_codseq
+			LET post:adt_mp_codseq_nro = l_codseq
+			LET post:adt_opmp_codint_mp = l_codint
+			LET post:mp_comandos = l_cmd
+			DPRINT "[DBG] RefRecov: seal local cod=[%s] pre=[%s] codjnl=[%s] prejnl=[%s] cmd=[%s]\n" l_codseq l_pres l_jnl_codseq l_jnl_pres l_cmd
+			CALL post:CDSopmp_jnlOK("REFUND")
+			LET l_local_seal = RETVAL
+			LET l_rec_ret = l_local_seal
+			DPRINT "[DBG] RefRecov: ret seal=[%d]\n" l_local_seal
+		ELSE
+			DPRINT "[DBG] RefRecov: fallback tipo_caida cod=[%s] pre=[%s] codjnl=[%s] rvjnl=[%d]\n" l_codseq l_pres l_jnl_codseq l_jnlret
+			CALL post:MISCmpTipoCaida("DEV")
+			LET l_rec_ret = RETVAL
+			DPRINT "[DBG] RefRecov: ret dev=[%d]\n" l_rec_ret
+		END IF
 
 		LET l_codseq = post:adt_opmp_codseq_nro
 		LET l_pres = post:adt_opmp_PresNro
