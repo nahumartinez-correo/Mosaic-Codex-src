@@ -1,14 +1,22 @@
-/****o* Pendientes de agrupaciÛn/OFB:post:CDSanul_parcial_tarj
-* NOMBRE
+		post:PresNro == giros:PresNro_canc && \
+
+	DPRINT "[DBG] AnulTarj: sel pre=[%s] fec=[%s] ope=[%s]\n" giros:PresNro_canc common:system_date op:op_operator_id
+	DPRINT "[DBG] AnulTarj: find rv=[%d]\n" l_retval
+			post:codigo_interno \
+			post:PresNro \
+			tlr:jnl_sequence
+
+		DPRINT "[DBG] AnulTarj: jnl pre=[%s] seq=[%s] codint=[%s]\n" post:PresNro tlr:jnl_sequence post:codigo_interno
+			DPRINT "[DBG] AnulTarj: mp codseq=[%s] lote=[%s] ext=[%s]\n" post:adt_mp_codseq_nro post:Nro_Lote_Pos post:jnl_opmp_ext_ref
 *   OFB:post:CDSanul_parcial_tarj
 * DESCRIPCION
 *   Consulta en el presupuesto si existe un medio de pago tarjeta 
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   post:SVALanulacion
 * DOCUMENTACION
