@@ -4,50 +4,6 @@
 * DESCRIPCION
 *  Esta rutina se ejecuta al confirmar la Anulación de Documentos (TX 7100)
 * ENTRADAS
-	LOCAL l_inc_codseq LIKE post:adt_opmp_codseq_nro
-	LOCAL l_inc_pres LIKE post:adt_opmp_PresNro
-	LOCAL l_sel_codseq LIKE post:adt_mp_codseq_nro
-	LOCAL l_sel_pres LIKE post:PresNro
-	LOCAL l_inc_act LIKE common:csr_string
-	CLEARFIELD post:adt_mp_codseq_nro
-
-	LET l_inc_codseq = post:adt_opmp_codseq_nro
-	LET l_inc_pres = post:adt_opmp_PresNro
-	LET l_sel_pres = post:PresNro
-	LET l_sel_codseq = post:adt_mp_codseq_nro
-	LET l_inc_act = "N"
-	IF (l_inc_codseq.NUMCHARS > 0 && l_inc_pres > 0) THEN
-		LET l_inc_act = "S"
-	END IF
-	IF (l_inc_act == "S") THEN
-		DPRINT "[DBG] SVALanulacion: val ses inc exp_codseq=[%s] exp_pres=[%s] sel_codseq=[%s] sel_pres=[%s]\n" l_inc_codseq l_inc_pres l_sel_codseq l_sel_pres
-		IF (l_sel_codseq == l_inc_codseq && l_sel_pres == l_inc_pres) THEN
-			DPRINT "[DBG] SVALanulacion: match sesion incompleta, activa cierre automatico.\n"
-			CALL post:MISCmpHayRefundIncom
-			IF (RETVAL == 0) THEN
-				CALL post:MISCmpFinalRefundInc
-				IF (RETVAL == 0) THEN
-					LET l_opmp_jnlOK = "S"
-					CLEARFIELD post:adt_opmp_codseq_nro
-					CLEARFIELD post:adt_opmp_PresNro
-				ELSE
-					DPRINT "[DBG] SVALanulacion: match pero fallo cierre automatico rv=[%d], sigue flujo normal.\n" RETVAL
-				END IF
-			END IF
-		ELSE
-			DPRINT "[DBG] SVALanulacion: mismatch sesion incompleta, fuerza flujo normal.\n"
-			MSGBOX "La sesion seleccionada no corresponde al Refund incompleto detectado.\nSe seguira el proceso normal.",OFB_OK,"AVISO"
-			CALL post:MISCclrArrayMP
-			CLEARFIELD post:mp_order_id_PS
-			CLEARFIELD post:mp_refund_id_PS
-			CLEARFIELD post:mp_refund_status_PS
-			CLEARFIELD post:mp_payment_id_PS
-			CLEARFIELD post:mp_order_id
-			CLEARFIELD post:mp_refund_id
-			CLEARFIELD post:mp_refund_status
-			CLEARFIELD post:mp_status_detail_PS
-		END IF
-	END IF
 *   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales

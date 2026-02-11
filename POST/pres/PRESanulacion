@@ -32,16 +32,7 @@ SUB post:PRESanulacion
 		return (-2)
 	end if
 
-	//Hook de contingencia: finaliza refunds Smart Point incompletos antes de iniciar la anulacion
-	IF (common:adt_mp_termi_integ == "S") THEN
-		DPRINT "[DBG] PRESanulacion hook: inicio val refund SP termi_integ=[%s] cur_tran=[%s] ind_tran=[%s]\n" common:adt_mp_termi_integ drv:INDcur_tran tlr:INDtran_name
-		CALL post:MISCmpHayRefundIncom
-		DPRINT "[DBG] PRESanulacion hook: resultado MISCmpHayRefundIncom RETVAL=[%d]\n" RETVAL
-		IF (RETVAL == 0) THEN
-			MSGBOX "Se detect un Refund para Smart Point incompleto.\nSe preseleccionara la sesion para finalizarlo.",OFB_OK,"AVISO"
-		END IF
-		DPRINT "[DBG] PRESanulacion hook: fin hook ses_str=[%s] pres=[%s]\n" post:sesion_anul_string post:PresNro
-	END IF
+	DPRINT "[DBG] PRESanulacion: ingreso flujo original, sin hook refund automatico.\n"
 
 	/*Deshabilito los menues*/
 	PDM ENABLEITEM pdm:drv:menubar ALL MOA_DISABLED
