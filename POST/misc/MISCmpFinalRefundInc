@@ -22,19 +22,39 @@ SUB post:MISCmpFinalRefundInc
 	LOCAL l_amt LIKE post:adt_opmp_amount
 	LOCAL l_codint LIKE post:adt_opmp_codint_mp
 	LOCAL l_aux_cod LIKE siaf:codigo_siaf
+	LOCAL l_cod_hook LIKE post:adt_opmp_codseq_nro
+	LOCAL l_pre_hook LIKE post:adt_opmp_PresNro
 
 	LET l_need_jnl = 0
 
-	DPRINT "[DBG] FinRefInc: ini fec=[%s] log=[%s] ter=[%s]\n" common:system_date op:op_login_id common:window_node
+	LET l_cod_hook = post:adt_opmp_codseq_nro
+	LET l_pre_hook = post:adt_opmp_PresNro
 
-	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-		WHERE post:adt_opmp_fecha == common:system_date \
-		&& post:adt_opmp_termi_win == common:window_node \
-		&& post:adt_opmp_login_id == op:op_login_id \
-		&& post:adt_opmp_operacion == "DEV" \
-		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
-		&& post:adt_opmp_codint_mp != "QRI" \
-		&& post:adt_opmp_status_p_PS != "canceled"
+	DPRINT "[DBG] FinRefInc: ini fec=[%s] log=[%s] ter=[%s]\n" common:system_date op:op_login_id common:window_node
+	DPRINT "[DBG] FinRefInc: hook cod=[%s] pre=[%s]\n" l_cod_hook l_pre_hook
+
+	IF (l_cod_hook > 0 && l_pre_hook > 0) THEN
+		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+			WHERE post:adt_opmp_fecha == common:system_date \
+			&& post:adt_opmp_termi_win == common:window_node \
+			&& post:adt_opmp_login_id == op:op_login_id \
+			&& post:adt_opmp_codseq_nro == l_cod_hook \
+			&& post:adt_opmp_PresNro == l_pre_hook \
+			&& post:adt_opmp_operacion == "DEV" \
+			&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+			&& post:adt_opmp_codint_mp != "QRI" \
+			&& post:adt_opmp_status_p_PS != "canceled"
+	ELSE
+		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+			WHERE post:adt_opmp_fecha == common:system_date \
+			&& post:adt_opmp_termi_win == common:window_node \
+			&& post:adt_opmp_login_id == op:op_login_id \
+			&& post:adt_opmp_operacion == "DEV" \
+			&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+			&& post:adt_opmp_codint_mp != "QRI" \
+			&& post:adt_opmp_status_p_PS != "canceled" \
+			&& post:adt_opmp_jnlOK == "N"
+	END IF
 
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
 	LET l_dbret = CDSRETVAL
@@ -86,8 +106,14 @@ SUB post:MISCmpFinalRefundInc
 	LET l_refps = post:mp_refund_id_PS
 	LET l_refst = post:mp_refund_status
 
-	DPRINT "[DBG] FinRefInc: dat cod=[%s] pre=[%s] jnl=[%s] cin=[%s]\n" l_codseq l_pres post:adt_opmp_jnlOK l_codint
-	DPRINT "[DBG] FinRefInc: ids ord=[%s] ref=[%s] st=[%s] imp=[%s]\n" l_ordps l_refps l_refst l_amt
+	DPRINT "[DBG] FinRefInc: dat cod=[%s] pre=[%s] jnl=[%s] cin=[%s] cmd=[%s]\n" l_codseq l_pres post:adt_opmp_jnlOK l_codint post:adt_opmp_comandos
+	DPRINT "[DBG] FinRefInc: idsPS ord=[%s] ref=[%s] st=[%s] imp=[%s]\n" post:adt_opmp_order_id_PS post:adt_opmp_ref_id_PS post:adt_opmp_ref_st_PS post:adt_opmp_amount
+	DPRINT "[DBG] FinRefInc: idsCM ord=[%s] ref=[%s] st=[%s] imp=[%s]\n" l_ordps l_refps l_refst l_amt
+
+	IF (post:adt_opmp_jnlOK == "S") THEN
+		DPRINT "[DBG] FinRefInc: ya cerrado cod=[%s] pre=[%s]\n" l_codseq l_pres
+		RETURN 0
+	END IF
 
 	IF (l_ordps.NUMCHARS == 0 || l_refps.NUMCHARS == 0) THEN
 		DPRINT "[DBG] FinRefInc: faltan ids ord=[%s] ref=[%s]\n" l_ordps l_refps

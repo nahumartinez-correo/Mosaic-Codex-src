@@ -101,6 +101,8 @@ SUB post:MISCmpHayRefundIncom
 		CLEARFIELD post:adt_opmp_codseq_nro
 		CLEARFIELD post:adt_opmp_PresNro
 		DPRINT "[DBG] HayRefInc: sin refund incompleto\n"
+	ELSE
+		DPRINT "[DBG] HayRefInc: guardo cod=[%s] pre=[%s]\n" post:adt_opmp_codseq_nro post:adt_opmp_PresNro
 	END IF
 
 	DPRINT "[DBG] HayRefInc: ret=[%d]\n" l_found
