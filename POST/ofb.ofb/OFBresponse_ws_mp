@@ -17,7 +17,7 @@
 *   NI50546 - Mercado Pago
 * SOURCE
 */
-#include "src\POST\ofb.ofb\postofb.ofb.h"
+#include "postofb.ofb.h"
 
 SUB post:OFBresponse_ws_mp
 
@@ -316,13 +316,6 @@ SUB post:OFBresponse_ws_mp
 				//Capturo los datos del error
 				CALL post:MISCresponseMP
 			END IF
-
-			// DEVONLY:PAUSE_REFUND_200025 BEGIN
-			// DEVONLY:PAUSE_REFUND_200025 A2
-			IF (post:mp_comandos == "POINT_REFUND_POST" && giros:codigo_procesamiento == 200025) THEN
-				MSGBOX "DEV PAUSE A2: Refund 200025 parsed (post-parse)",OFB_OK,"DEV"
-			END IF
-			// DEVONLY:PAUSE_REFUND_200025 END
 		BREAK
 
 		CASE 300010

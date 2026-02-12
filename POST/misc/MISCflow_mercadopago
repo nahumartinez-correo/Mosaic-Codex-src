@@ -40,7 +40,7 @@ SUB post:MISCflow_mercadopago
 						//Si existe la Orden y no se efectuo el pago entonces cancelo la Orden  
 						CALL post:MISCmpDelOrderPoint
 						IF (post:mp_response_PS == 409) THEN
-							WHILE (post:mp_status_PS != "canceled" && post:mp_status_PS != "processed" && post:mp_status_PS != "failed") THEN
+							WHILE (post:mp_status_PS != "canceled" && post:mp_status_PS != "processed" && post:mp_status_PS != "failed" && post:mp_status_PS != "action_required") THEN
 								CALL post:MISCmpGetOrderPoint
 								IF (post:mp_status_PS != "canceled" && post:mp_status_PS != "failed") THEN
 									MSGBOX "Debe cancelar la orden de pago generada desde la terminal Point",0x00,"ATENCION"
@@ -60,6 +60,11 @@ SUB post:MISCflow_mercadopago
 							//Actualizo la marca en la tabla OperacionesMP
 							CALL post:CDSopmp_jnlFallo("VEN")
 							MSGBOX "La orden presento un error. Se cancela la orden",0x00,"ATENCION"
+							RETURN -2
+						ELSEIF (post:mp_status_pago_PS == "action_required") THEN
+							//Actualizo la marca en la tabla OperacionesMP
+							CALL post:CDSopmp_jnlFallo("VEN")
+							MSGBOX "La orden requiere accion manual. Se cancela la orden",0x00,"ATENCION"
 							RETURN -2
 						END IF
 					END IF
