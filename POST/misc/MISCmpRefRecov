@@ -37,6 +37,9 @@ SUB post:MISCmpRefRecov
 	LOCAL l_medio_pago_desc LIKE post:medio_pago_desc
 	LOCAL l_codint_tarj_desc LIKE post:codint_tarj_desc
 	LOCAL l_cod_siaf_dev LIKE siaf:codigo_siaf
+	LOCAL l_upd_find LIKE lib:err_retval
+	LOCAL l_upd_ret LIKE lib:err_retval
+	LOCAL l_jnl_after LIKE post:adt_opmp_jnlOK
 
 	LET l_has_pending = -2
 	CLEARFIELD l_codseq
@@ -331,43 +334,53 @@ SUB post:MISCmpRefRecov
 			END IF
 		END IF
 
-		LET l_codseq = post:adt_opmp_codseq_nro
-		LET l_pres = post:adt_opmp_PresNro
+		LET l_upd_find = -2
+		LET l_upd_ret = -2
 		CLEARFIELD l_jnlok
-		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-			WHERE post:adt_opmp_fecha == common:system_date \
-			&& post:adt_opmp_login_id == op:op_login_id \
-			&& post:adt_opmp_termi_win == common:window_node \
-			&& post:adt_opmp_codseq_nro == l_codseq
-		CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-		IF (CDSRETVAL == 0) THEN
-			CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_jnlOK INTO l_jnlok
+		CLEARFIELD l_jnl_after
+
+		IF (l_rec_ret == 0) THEN
+			DPRINT "[DBG] RefRecov: upd opmp pre=[%s] cod=[%s]\n" l_pres l_codseq
+
+			CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+				WHERE post:adt_opmp_fecha == common:system_date \
+				&& post:adt_opmp_login_id == op:op_login_id \
+				&& post:adt_opmp_termi_win == common:window_node \
+				&& post:adt_opmp_operacion == "DEV" \
+				&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+				&& post:adt_opmp_codseq_nro == l_codseq \
+				&& post:adt_opmp_PresNro == l_pres \
+				&& post:adt_opmp_codint_mp != "QRI"
+			CDS FINDFIRST DSC:post:OperacionesMP_ctx LOCK
+			LET l_upd_find = CDSRETVAL
+			IF (l_upd_find == 0) THEN
+				CDS EXTRACT DSC:post:OperacionesMP_ctx ALL
+				LET l_jnlok = post:adt_opmp_jnlOK
+				CDS APPEND DSC:post:OperacionesMP_ctx "S" AS post:adt_opmp_jnlOK
+				CDS UPDATE DSC:post:OperacionesMP_ctx LOCK
+				LET l_upd_ret = CDSRETVAL
+			END IF
+			CDS UNLOCK DSC:post:OperacionesMP_ctx
+			CDS ENDSELECT DSC:post:OperacionesMP_ctx
+			DPRINT "[DBG] RefRecov: upd opmp rv_find=[%d] jnl_before=[%s]\n" l_upd_find l_jnlok
+
+			CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+				WHERE post:adt_opmp_fecha == common:system_date \
+				&& post:adt_opmp_login_id == op:op_login_id \
+				&& post:adt_opmp_termi_win == common:window_node \
+				&& post:adt_opmp_operacion == "DEV" \
+				&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+				&& post:adt_opmp_codseq_nro == l_codseq \
+				&& post:adt_opmp_PresNro == l_pres
+			CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+			IF (CDSRETVAL == 0) THEN
+				CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_jnlOK INTO l_jnl_after
+			END IF
+			CDS ENDSELECT DSC:post:OperacionesMP_ctx
+			DPRINT "[DBG] RefRecov: upd opmp rv_upd=[%d] jnl_after=[%s]\n" l_upd_ret l_jnl_after
 		END IF
-		CDS ENDSELECT DSC:post:OperacionesMP_ctx
-		DPRINT "[DBG] RefRecov: fin db cod=[%s] pre=[%s] jnl=[%s]\n" l_codseq l_pres l_jnlok
 
-		IF (l_rec_ret == 0 && l_jnlok == "S") THEN
-			MSGBOX "SE COMPLETO EL REEMBOLSO INCONCLUSO",OFB_OK,"AVISO"
-			RETURN 0
-		END IF
-
-		DPRINT "[DBG] RefRecov: fallback tipo_caida cod=[%s] pre=[%s] jnl=[%s]\n" l_codseq l_pres l_jnlok
-		CALL post:MISCmpTipoCaida("DEV")
-		LET l_rec_ret = RETVAL
-		DPRINT "[DBG] RefRecov: fallback ret=[%d]\n" l_rec_ret
-
-		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-			WHERE post:adt_opmp_fecha == common:system_date \
-			&& post:adt_opmp_login_id == op:op_login_id \
-			&& post:adt_opmp_termi_win == common:window_node \
-			&& post:adt_opmp_codseq_nro == l_codseq
-		CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-		IF (CDSRETVAL == 0) THEN
-			CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_jnlOK INTO l_jnlok
-		END IF
-		CDS ENDSELECT DSC:post:OperacionesMP_ctx
-
-		IF (l_rec_ret == 0 && l_jnlok == "S") THEN
+		IF (l_rec_ret == 0 && l_jnl_after == "S") THEN
 			MSGBOX "SE COMPLETO EL REEMBOLSO INCONCLUSO",OFB_OK,"AVISO"
 			RETURN 0
 		END IF
