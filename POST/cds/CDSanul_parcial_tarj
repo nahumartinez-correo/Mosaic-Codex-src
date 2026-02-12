@@ -1,14 +1,21 @@
-/****o* Pendientes de agrupaciÛn/OFB:post:CDSanul_parcial_tarj
+	LOCAL l_opmp_codseq_nro LIKE post:adt_mp_codseq_nro
+	LOCAL l_vpi_codseq_nro LIKE post:adt_mp_codseq_nro
+				post:jnl_opmp_codseq_nro INTO l_opmp_codseq_nro \
+				post:adt_vpi_codseq_nro INTO l_vpi_codseq_nro \
+
+			LET post:adt_mp_codseq_nro = l_opmp_codseq_nro
+			DPRINT "[DBG] AnulMP: pre=[%s] 99099 opmp_cod=[%s] vpi_cod=[%s] mp_cod=[%s]\n" \
+				giros:PresNro_canc l_opmp_codseq_nro l_vpi_codseq_nro post:adt_mp_codseq_nro
 * NOMBRE
 *   OFB:post:CDSanul_parcial_tarj
 * DESCRIPCION
 *   Consulta en el presupuesto si existe un medio de pago tarjeta 
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   post:SVALanulacion
 * DOCUMENTACION
