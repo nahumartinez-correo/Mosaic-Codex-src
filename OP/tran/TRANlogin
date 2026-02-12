@@ -5,6 +5,9 @@
 *   Rutina que se ejecuta cuando el usuario se loguea en MOSAIC
 * ENTRADAS
 	LOCAL l_mp_refund_pend LIKE lib:err_retval
+	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_pres LIKE post:adt_opmp_PresNro
+	LOCAL l_msg LIKE common:csr_string
 *   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
@@ -658,6 +661,9 @@ SUB op:TRANlogin
 			IF (RETVAL != 0) THEN
 	//gpb:NI50525 POS Integrado
 	LET l_mp_refund_pend = -2
+	CLEARFIELD l_codseq
+	CLEARFIELD l_pres
+	CLEARFIELD l_msg
 	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
 		WHERE post:adt_opmp_fecha == common:system_date \
 		&& post:adt_opmp_login_id == op:op_login_id \
@@ -669,11 +675,24 @@ SUB op:TRANlogin
 		&& post:adt_opmp_jnlOK == "N"
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
 	IF (CDSRETVAL == 0) THEN
+		CDS EXTRACT DSC:post:OperacionesMP_ctx \
+			post:adt_opmp_codseq_nro \
+			post:adt_opmp_PresNro
 		LET l_mp_refund_pend = 0
+		LET l_codseq = post:adt_opmp_codseq_nro
+		LET l_pres = post:adt_opmp_PresNro
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 	IF (l_mp_refund_pend == 0) THEN
-		MSGBOX "SE DETECTO UN REEMBOLSO SIN COMPLETARSE POR UNA CAIDA O INTERRUPCION. DEBE IR A ANULACION DE DOCUMENTOS PARA FINALIZARLO",OFB_OK,"AVISO"
+		FPRINT l_msg "SE DETECTO UN REEMBOLSO SIN COMPLETARSE POR UNA CAIDA O INTERRUPCION. DEBE IR A ANULACION DE DOCUMENTOS PARA FINALIZARLO"
+		IF (l_codseq.NUMCHARS > 0) THEN
+			FPRINT l_msg "%s CODSEQ %s" l_msg l_codseq
+		END IF
+		IF (l_pres.NUMCHARS > 0) THEN
+			FPRINT l_msg "%s PRES %s" l_msg l_pres
+		END IF
+		FPRINT l_msg "%s FECHA %s" l_msg common:system_date
+		MSGBOX l_msg,OFB_OK,"AVISO"
 	END IF
 
 		common:sleep_factura = 0
