@@ -31,6 +31,8 @@ SUB op:TRANlogin
 	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
 	LOCAL l_pres LIKE post:adt_opmp_PresNro
 	LOCAL l_msg LIKE common:csr_string
+	LOCAL l_msg_popup LIKE common:csr_string
+	LOCAL l_ot_term LIKE post:adt_opmp_termi_win
 
   LET intentos = 0
 
@@ -757,6 +759,7 @@ SUB op:TRANlogin
 					post:adt_opmp_login_id \
 					post:adt_opmp_termi_win \
 					post:adt_opmp_codint_mp
+				LET l_ot_term = post:adt_opmp_termi_win
 				DPRINT "[DBG] Verificacion de venta inconclusa en otra terminal. Campo post:adt_opmp_codint_mp = [%s]\n" post:adt_opmp_codint_mp
 				DPRINT "[DBG] OperacionesMP eval: status=[%s] jnlOK=[%s] fecha=[%s] login_id=[%s] termi_win=[%s]\n" post:adt_opmp_status_p_PS post:adt_opmp_jnlOK post:adt_opmp_fecha post:adt_opmp_login_id post:adt_opmp_termi_win
 			END IF
@@ -764,7 +767,9 @@ SUB op:TRANlogin
 
 			IF (l_mp_pend_otermi == 0) THEN
 				DPRINT "[DBG] MATCH venta inconclusa otra terminal -> se muestra popup y se hace RETURN -2\n"
-				MSGBOX "Se detectó una venta sin completar en otra terminal. Por favor, loguearse en la misma terminal y completar el proceso",OFB_OK,"AVISO"
+				FPRINT l_msg_popup "Se detectó una venta sin completar en otra terminal. Por favor, loguearse en la misma terminal y completar el proceso\nOperador: %s Terminal: %s" op:op_login_id l_ot_term
+				MSGBOX l_msg_popup,OFB_OK,"AVISO"
+				CALL MISCend_NT
 				RETURN -2
 			END IF
 		END IF
