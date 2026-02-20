@@ -27,7 +27,7 @@ SUB op:TRANlogin
 	LOCAL PresNroAux LIKE post:PresNro
 	LOCAL LLong LIKE siaf:i
 	LOCAL l_mp_refund_pend LIKE lib:err_retval
-	LOCAL l_mp_ope_pend_otra_termi LIKE lib:err_retval
+	LOCAL l_mp_pend_otermi LIKE lib:err_retval
 	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
 	LOCAL l_pres LIKE post:adt_opmp_PresNro
 	LOCAL l_msg LIKE common:csr_string
@@ -737,13 +737,9 @@ SUB op:TRANlogin
 		MSGBOX l_msg,OFB_OK,"AVISO"
 	END IF
 
-		//gpb:PS- 10951
-		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
-	;;	//gbp:NI50546 Mercado Pago
-	;;  //Realiza la verificacion por caida de RT en las operaciones MP (Tx-99600/Tx-99601/Tx99605)
-	  IF (common:adt_mp_termi_integ == "S") THEN
-			//Valido si existe una venta MP incompleta en otra terminal para el operador logueado
-			LET l_mp_ope_pend_otra_termi = -2
+		IF (common:adt_mp_termi_integ == "S") THEN
+			DPRINT "[DBG] Verificacion venta inconclusa otra terminal. system_date=[%s] op_login_id=[%s] window_node=[%s]\n" common:system_date op:op_login_id common:window_node
+			LET l_mp_pend_otermi = -2
 			CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
 				WHERE post:adt_opmp_status_p_PS != "canceled" \
 				&& post:adt_opmp_jnlOK == "N" \
@@ -753,15 +749,31 @@ SUB op:TRANlogin
 				&& post:adt_opmp_codint_mp != "QRI"
 			CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
 			IF (CDSRETVAL == 0) THEN
-				LET l_mp_ope_pend_otra_termi = 0
+				LET l_mp_pend_otermi = 0
+				CDS EXTRACT DSC:post:OperacionesMP_ctx \
+					post:adt_opmp_status_p_PS \
+					post:adt_opmp_jnlOK \
+					post:adt_opmp_fecha \
+					post:adt_opmp_login_id \
+					post:adt_opmp_termi_win \
+					post:adt_opmp_codint_mp
+				DPRINT "[DBG] Verificacion de venta inconclusa en otra terminal. Campo post:adt_opmp_codint_mp = [%s]\n" post:adt_opmp_codint_mp
+				DPRINT "[DBG] OperacionesMP eval: status=[%s] jnlOK=[%s] fecha=[%s] login_id=[%s] termi_win=[%s]\n" post:adt_opmp_status_p_PS post:adt_opmp_jnlOK post:adt_opmp_fecha post:adt_opmp_login_id post:adt_opmp_termi_win
 			END IF
 			CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
-			IF (l_mp_ope_pend_otra_termi == 0) THEN
+			IF (l_mp_pend_otermi == 0) THEN
+				DPRINT "[DBG] MATCH venta inconclusa otra terminal -> se muestra popup y se hace RETURN -2\n"
 				MSGBOX "Se detectó una venta sin completar en otra terminal. Por favor, loguearse en la misma terminal y completar el proceso",OFB_OK,"AVISO"
-				RETURN(-2)
+				RETURN -2
 			END IF
+		END IF
 
+		//gpb:PS- 10951
+		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
+	;;	//gbp:NI50546 Mercado Pago
+	;;  //Realiza la verificacion por caida de RT en las operaciones MP (Tx-99600/Tx-99601/Tx99605)
+	  IF (common:adt_mp_termi_integ == "S") THEN
 	  	CALL post:MISCmpVerifCaidas
 	  END IF
 	
