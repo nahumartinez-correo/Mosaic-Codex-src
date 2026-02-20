@@ -23,6 +23,7 @@ SUB post:SVAL99600_mpago
 	LOCAL l_status_esperado LIKE common:csr_string
 	LOCAL l_refund_id LIKE common:csr_string
 	LOCAL l_es_point LIKE siaf:i
+	LOCAL l_refund_inc LIKE lib:err_retval
 
 	IF (post:mp_codint_mp == "QRI") THEN
 		l_es_point = 0
@@ -69,25 +70,96 @@ SUB post:SVAL99600_mpago
 	IF (l_es_point) THEN
 		//Smart Point: se evita la consulta 200010 y se envia directamente el refund 200025
 		IF (l_refund_id == "" && l_status_refund == "") THEN
-			CALL post:MISCmpRefundPayment
-			IF (l_es_point) THEN
+
+			LET l_refund_inc = -2
+			CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+				WHERE post:adt_opmp_fecha == common:system_date \
+				&& post:adt_opmp_login_id == op:op_login_id \
+				&& post:adt_opmp_termi_win == common:window_node \
+				&& post:adt_opmp_PresNro == giros:PresNro_canc \
+				&& post:adt_opmp_codseq_nro == post:adt_mp_codseq_nro \
+				&& post:adt_opmp_operacion == "DEV" \
+				&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+				&& post:adt_opmp_codint_mp != "QRI" \
+				&& post:adt_opmp_status_p_PS != "canceled" \
+				&& post:adt_opmp_jnlOK == "N"
+			CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+			LET l_refund_inc = CDSRETVAL
+			IF (l_refund_inc == 0) THEN
+				CDS EXTRACT DSC:post:OperacionesMP_ctx \
+					post:adt_opmp_ref_id \
+					post:adt_opmp_ref_id_PS \
+					post:adt_opmp_ref_st_PS \
+					post:adt_opmp_status_p_PS \
+					post:adt_opmp_ref_pay_id \
+					post:adt_opmp_ref_pay_PS \
+					post:adt_opmp_order_id \
+					post:adt_opmp_order_id_PS \
+					post:adt_opmp_auth_code
+
+				IF (post:mp_refund_id_PS.NUMCHARS == 0 && post:adt_opmp_ref_id_PS.NUMCHARS > 0) THEN
+					LET post:mp_refund_id_PS = post:adt_opmp_ref_id_PS
+				END IF
+				IF (post:mp_refund_id.NUMCHARS == 0 && post:adt_opmp_ref_id != 0) THEN
+					LET post:mp_refund_id = post:adt_opmp_ref_id
+				END IF
+				IF (post:mp_refund_status_PS.NUMCHARS == 0 && post:adt_opmp_ref_st_PS.NUMCHARS > 0) THEN
+					LET post:mp_refund_status_PS = post:adt_opmp_ref_st_PS
+				END IF
+				IF (post:mp_refund_status.NUMCHARS == 0 && post:adt_opmp_status_p_PS.NUMCHARS > 0) THEN
+					LET post:mp_refund_status = post:adt_opmp_status_p_PS
+				END IF
+				IF (post:mp_refund_payment_id == 0 && post:adt_opmp_ref_pay_id != 0) THEN
+					LET post:mp_refund_payment_id = post:adt_opmp_ref_pay_id
+				END IF
+				IF (post:mp_refund_pay_id_PS.NUMCHARS == 0 && post:adt_opmp_ref_pay_PS.NUMCHARS > 0) THEN
+					LET post:mp_refund_pay_id_PS = post:adt_opmp_ref_pay_PS
+				END IF
+				IF (post:mp_order_id_PS.NUMCHARS == 0 && post:adt_opmp_order_id_PS.NUMCHARS > 0) THEN
+					LET post:mp_order_id_PS = post:adt_opmp_order_id_PS
+				END IF
+				IF (post:mp_order_id.NUMCHARS == 0 && post:adt_opmp_order_id > 0) THEN
+					LET post:mp_order_id = post:adt_opmp_order_id
+				END IF
+
+				IF (post:mp_auth_code.NUMCHARS == 0 && post:adt_opmp_auth_code.NUMCHARS > 0) THEN
+					LET post:mp_auth_code = post:adt_opmp_auth_code
+				END IF
+
+				CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_refund,LST:post:LISTget_opmp_refund)
+				
 				l_status_refund = post:mp_refund_status_PS
-				IF (l_status_refund == "")
+				IF (l_status_refund == "") THEN
 					l_status_refund = post:mp_refund_status
 				END IF
+				l_refund_id = post:mp_refund_id_PS
+				IF (l_refund_id == "") THEN
+					l_refund_id = post:mp_refund_id
+				END IF
+
+				FPRINT l_mensaje ,"OPERACION INCOMPLETA POR CAIDA PREVIA. SE FINALIZARA AUTOMATICAMENTE SIN ENVIO A HOST. CODSEQ %s PRES %s FECHA %s", post:adt_mp_codseq_nro, giros:PresNro_canc, common:system_date
+				MSGBOX l_mensaje,OFB_OK,"AVISO"
 			ELSE
-				l_status_refund = post:mp_refund_status
-			END IF
-			IF (RETVAL < 0) THEN
-				FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
-				MSGBOX l_mensaje,OFB_OK,"ERROR"
-				RETURN -2
-			END IF
-			IF (l_status_refund != l_status_esperado) THEN
+				CALL post:MISCmpRefundPayment
+				IF (l_es_point) THEN
+					l_status_refund = post:mp_refund_status_PS
+					IF (l_status_refund == "")
+						l_status_refund = post:mp_refund_status
+					END IF
+				ELSE
+					l_status_refund = post:mp_refund_status
+				END IF
+				IF (RETVAL < 0) THEN
 					FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
 					MSGBOX l_mensaje,OFB_OK,"ERROR"
-					RETURN -2
+				END IF
+				IF (l_status_refund != l_status_esperado) THEN
+						FPRINT l_mensaje ,"NO SE PUEDE ANULAR EL PAGO\n STATUS [%s]", l_status_refund
+						MSGBOX l_mensaje,OFB_OK,"ERROR"
+						RETURN -2
+				END IF
 			END IF
+			CDS ENDSELECT DSC:post:OperacionesMP_ctx
 		END IF
 	ELSE
 		//Flujo QR: mantiene consultas 200010

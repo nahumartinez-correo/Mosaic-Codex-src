@@ -2,11 +2,11 @@
 * NOMBRE
 *   FLD:siaf:Fields
 * DESCRIPCION
-*   Campos de la aplicaciï¿½n siaf
+*   Campos de la aplicación siaf
 * SOURCE
 */
 
-#include "C:\moaproj\V47.10\src\INCLUDE\tesoro.h"
+#include "tesoro.h"
 ;FLD objects  exported 06/22/1999  13:22:14
 ;by user SCAZEA, from path D:\MOAPROJ\tele\
 
@@ -1316,7 +1316,7 @@ adt_mot_capt ASCII 1 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0
 adt_mot_capt_tmp ASCII 1 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0
 bck_mot_capt ASCII 1 1 ~ SCDEAsCUrDmpbdha 0 0 0 0 0 0 0
 
-/* Estos trs campos no se utilizan mï¿½s Gabriel Falciola*/
+/* Estos trs campos no se utilizan más Gabriel Falciola*/
 adt_mot_ley ASCII 40 1 ~ SCdEAscUrDmpbdha 0 0 0 0 0 0 0
 adt_mot_ley_tmp ASCII 40 1 ~ SCdEAscUrDmpbdha 0 0 0 0 0 0 0
 bck_mot_ley ASCII 40 1 ~ SCdEAscUrDmpbdha 0 0 0 0 0 0 0
@@ -2061,7 +2061,7 @@ tcanpagogiro_tel_vec FIXED 13.2 ~ ~ ScDEasCurDmpbdha PAT:importe_tot 0 0 0 0 0 0
 ccanpagogiro_tel_vec NUMERIC 4 ~ ~ ScDEasCurDmpbdha 0 0 0 0 0 0 0 
 icanpagogiro_tel_vec FIXED 13.2 ~ ~ ScDEasCurDmpbdha PAT:importe_tot 0 0 0 0 0 0
 
-/*Cancelaciï¿½n de la 70110 */
+/*Cancelación de la 70110 */
 tcanpagogiro_pos_vec FIXED 13.2 ~ ~ ScDEasCurDmpbdha PAT:importe_tot 0 0 0 0 0 0 
 ccanpagogiro_pos_vec NUMERIC 4 ~ ~ ScDEasCurDmpbdha 0 0 0 0 0 0 0 
 icanpagogiro_pos_vec FIXED 13.2 ~ ~ ScDEasCurDmpbdha PAT:importe_tot 0 0 0 0 0 0 

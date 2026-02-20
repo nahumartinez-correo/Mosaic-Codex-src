@@ -53,7 +53,7 @@ ERRutil_cds_937     "No puedo liberar tabla lockeada"
 ERRutil_cds_938     "Fallo de Compresion de la tabla"
 
 VersionCorreo       "V47.09"
-BuildVersion        "18"
+BuildVersion        "31"
 
 
 /*******/

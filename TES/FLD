@@ -2,11 +2,11 @@
 * NOMBRE
 *   FLD:tes:Fields
 * DESCRIPCION
-*   Campos de la aplicaciï¿½n tes
+*   Campos de la aplicación tes
 * SOURCE
 */
 
-#include "C:\moaproj\V47.10\src\INCLUDE\tesoro.h"
+#include "tesoro.h"
 #include "cuentas.h"
 ;FLD objects  exported 06/07/1999  17:27:17
 ;by user SCAZEA, from path D:\MOAPROJ\tele\
@@ -1029,7 +1029,7 @@ item_sin_iva  FIXED 12.2 10 ~ SCDEasCurDmpbdha PAT:importe 0 0 0 0 0 0
 item_flia ASCII 3 1 ~ SCdEAscUrDmpbdha 0 0 0 0 0 0 OFB:DUREpipe
 climed_ult_item ASCII 33 10 ~ ScDEascUrDmpbdha 0 0 0 0 0 0 0
 
-//Indica si un Cheque estï¿½ asociado a un Adelanto Monetario
+//Indica si un Cheque está asociado a un Adelanto Monetario
 teso_cheq_lista_giro  ASCII 1 10 ~ SCDEascUrdmpbdha 0 0 0 0 0 0 0
 //Indica el nro de adelanto asociado al cheque
 teso_cheq_adel_nro	ASCII 15  10 ~ SCDEascUrDmpbdha 0 0 0 0 0 0 0
@@ -1064,7 +1064,7 @@ cant_cons_fdv NUMERIC 1 1 ~ SCDEAscurdmpbdha 0 0 0 0 0 0 0
 list_cons_fdv ASCII 1 1 ~ SCDEAscUrdmpbdha 0 0 0 0 0 0 0 
 
 //Post Integrado
-teso_cheq_comercio ASCII 15 ~ ~ SCDEAscurDmPbdha 0 0 0 0 0 0 0      				// Cï¿½digo de comercio MAX 15
+teso_cheq_comercio ASCII 15 ~ ~ SCDEAscurDmPbdha 0 0 0 0 0 0 0      				// Código de comercio MAX 15
 adt_cheqaux_comerc ASCII 15 ~ ~ SCDEAscurDmPbdha 0 0 0 0 0 0 0
 teso_cheq_termi_win ASCII 40 ~ ~ SCDEascurdmPbdha 0 0 0 0 0 0 0     				// Terminal Windows
 

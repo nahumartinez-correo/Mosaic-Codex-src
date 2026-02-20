@@ -33,7 +33,7 @@ SUB post:MISCflow_mercadopago
 					RETURN -2
 				ELSE
 					IF (post:mp_status_pago_PS == "processed") THEN
-						MSGBOX "El pago ya fue realizado, si desea anularlo deber� hacerlo por Anulacion de Comprobantes",0x00,"ATENCION"
+						MSGBOX "El pago ya fue aprobado. Puede ser cancelado desde la transaccion de anulacion.",0x00,"ATENCION"
 						//Fuerzo la confirmacion porque ya se acredito el pago!!!
 						LASTKEY = RT_SEND
 					ELSE
@@ -53,7 +53,7 @@ SUB post:MISCflow_mercadopago
 							MSGBOX "Ha cancelado la orden de pago generada",0x00,"ATENCION"
 							RETURN -2
 						ELSEIF (post:mp_status_PS == "processed") THEN
-							MSGBOX "El pago ya fue realizado, si desea anularlo deber� hacerlo por Anulacion de Comprobantes",0x00,"ATENCION"
+							MSGBOX "El pago ya fue aprobado. Puede ser cancelado desde la transaccion de anulacion.",0x00,"ATENCION"
 							//Fuerzo la confirmacion porque ya se acredito el pago!!!
 							LASTKEY = RT_SEND
 						ELSEIF (post:mp_status_PS == "failed") THEN
@@ -95,7 +95,7 @@ SUB post:MISCflow_mercadopago
 					RETURN -2
 				ELSE
 					IF (post:mp_status_pago == "approved") THEN
-						MSGBOX "El pago ya fue realizado, si desea anularlo deber� hacerlo por Anulacion de Comprobantes",0x00,"ATENCION"
+						MSGBOX "El pago ya fue aprobado. Puede ser cancelado desde la transaccion de anulacion.",0x00,"ATENCION"
 						//Fuerzo la confirmacion porque ya se acredito el pago!!!
 						LASTKEY = RT_SEND
 					ELSE

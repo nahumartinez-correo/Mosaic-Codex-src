@@ -102,33 +102,35 @@ SUB post:MISCmpTipoCaida(p_operacion)
 
 	//Si es una Venta, fuerzo la Anulacion
 	IF (l_operacion == "VEN") THEN
+		//Se comenta todo flujo para QR, hasta definir nuevo alcance
 		//Si la Orden es QR Integrado
-		IF (post:adt_opmp_codint_mp == "QRI") THEN
+		//IF (post:adt_opmp_codint_mp == "QRI") THEN
 			//Resguardo la lista
-			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderQR,LST:post:LISTset_opmp_orderQR) 
-			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderID,LST:post:LISTset_opmp_orderID)
-			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_payment,LST:post:LISTset_opmp_payment)
+			//CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderQR,LST:post:LISTset_opmp_orderQR) 
+			//CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderID,LST:post:LISTset_opmp_orderID)
+			//CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_payment,LST:post:LISTset_opmp_payment)
 		
 			//Hago un Search para traer el detalle del Pago
-			CALL post:MISCmpSearchPayment
-			IF (RETVAL < 0) THEN
+			//CALL post:MISCmpSearchPayment
+			//IF (RETVAL < 0) THEN
 				//Cancelo la ultima Orden que esta viva
-				CALL post:MISCmpDelOrderQR
+				//CALL post:MISCmpDelOrderQR
 				
 				//Actualizo la marca en la tabla OperacionesMP
-				CALL post:CDSopmp_jnlFallo("VEN")
+				//CALL post:CDSopmp_jnlFallo("VEN")
 				
-				RETURN 0
-			ELSE
+				//RETURN 0
+			//ELSE
 				//Si el pago no fue aprovado
-				IF (post:mp_status_pago != "approved") THEN
-					LET post:mp_status = "CANCELLED"
+				//IF (post:mp_status_pago != "approved") THEN
+					//LET post:mp_status = "CANCELLED"
 					//Grabo en la tabla OperacionesMP
-					CALL post:MISCsaveOpeMP(post:mp_operacion,post:mp_comandos)
-					RETURN -2
-				END IF
-			END IF
-		ELSE		
+					//CALL post:MISCsaveOpeMP(post:mp_operacion,post:mp_comandos)
+					//RETURN -2
+				//END IF
+			//END IF
+		//ELSE		
+		IF (post:adt_opmp_codint_mp != "QRI") THEN
 			//Resguardo la lista
 			//singlestep on
 			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order) 
@@ -197,12 +199,14 @@ SUB post:MISCmpTipoCaida(p_operacion)
 		LET l_mp_codint_mp = post:adt_opmp_codint_mp
 		LET l_adt_vpi_codseq_nro = post:adt_vpi_codseq_nro
 	ELSE
-		IF (post:adt_opmp_codint_mp == "QRI") THEN
+		//Se comenta todo flujo de QR, hasta definir alcance
+		//IF (post:adt_opmp_codint_mp == "QRI") THEN
 			//Resguardo la lista
-			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderQR,LST:post:LISTset_opmp_orderQR) 
-			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderID,LST:post:LISTset_opmp_orderID)
-			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_payment,LST:post:LISTset_opmp_payment)
-		ELSE
+			//CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderQR,LST:post:LISTset_opmp_orderQR) 
+			//CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_orderID,LST:post:LISTset_opmp_orderID)
+			//CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_payment,LST:post:LISTset_opmp_payment)
+		//ELSE
+		IF (post:adt_opmp_codint_mp != "QRI") THEN
 			//Resguardo la lista
 			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order) 
 			CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_payment,LST:post:LISTset_opmp_payment)
@@ -210,20 +214,22 @@ SUB post:MISCmpTipoCaida(p_operacion)
 			CALL csr:proc_list(F_COPY,LST:post:LISTset_opmp_refund,LST:post:LISTget_opmp_refund)
 		END IF	
 		
-		IF (post:adt_opmp_codint_mp == "QRI") THEN
-			CALL post:MISCmpGetRefund
-			IF (RETVAL < 0) THEN
-				RETURN -2
-			END IF
+		//Se comenta todo flujo de QR, hasta definir alcance
+		//IF (post:adt_opmp_codint_mp == "QRI") THEN
+			//CALL post:MISCmpGetRefund
+			//IF (RETVAL < 0) THEN
+				//RETURN -2
+			//END IF
 			
 			//Si no se aprobo la devolucion
-			IF (post:mp_refund_id.NUMCHARS == 0 && post:mp_refund_status != "approved") THEN
+			//IF (post:mp_refund_id.NUMCHARS == 0 && post:mp_refund_status != "approved") THEN
 				//Actualizo la marca en la tabla OperacionesMP
-				CALL post:CDSopmp_jnlFallo("VEN")
+				//CALL post:CDSopmp_jnlFallo("VEN")
 				
-				RETURN -2
-			END IF
-		ELSE
+				//RETURN -2
+			//END IF
+		//ELSE
+		IF (post:adt_opmp_codint_mp != "QRI") THEN
 			//Smart Point: valido con la info local y la respuesta 200025 previa
 			IF (post:mp_refund_status.NUMCHARS == 0) THEN
 				LET post:mp_refund_status = post:mp_refund_status_PS

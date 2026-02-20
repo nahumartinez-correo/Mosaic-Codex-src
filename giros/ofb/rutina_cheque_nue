@@ -1,18 +1,18 @@
-/****o* Pendientes de agrupaciï¿½n/OFB:giros:rutina_cheque_nue
+/****o* Pendientes de agrupación/OFB:giros:rutina_cheque_nue
 * NOMBRE
 *   OFB:giros:rutina_cheque_nue
 * DESCRIPCION
 *   Distinto 95000...igual a 95010??
 * ENTRADAS
-*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
+*   Otros objetos que deberán ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   Documentaciï¿½n relevante que deberï¿½ ser actualizada por la modificaciï¿½n de la rutina
+*   Documentación relevante que deberá ser actualizada por la modificación de la rutina
 * SOURCE
 */
 #include "girosofb.h"
@@ -25,7 +25,7 @@
 #include "csr.h"            /*averiguar ?*/
 #include "pickdrv.h"              /*averiguar ?*/
 #include <dberrs.h>
-#include "C:\moaproj\V47.10\src\INCLUDE\impresio.h"
+#include "impresio.h"
 #include "hcommstd.h"
 #include "giros.h"
 
@@ -64,24 +64,24 @@ sub giros:rutina_cheque_nue
 
 //	CALL CDSavanza_cheq("EM")
 		
-	//Si el cheque utilizado pertenece a una chequera que se encuentra en un Pase (estado = P", todavï¿½a 
+	//Si el cheque utilizado pertenece a una chequera que se encuentra en un Pase (estado = P", todavía 
 	//no ha sido recepcionado por el operador), la marco con estado = I (intermedio).
 	//CALL tes:CDSactMarcaTesChkMov
 	
 	
 	
 	//
-//	MSGBOX "Inserte el cheque para su impresiï¿½n",OFB_OK,"Atenciï¿½n"
+//	MSGBOX "Inserte el cheque para su impresión",OFB_OK,"Atención"
 //	INIT 76,"docprt WAIT 0"	
 	//printdoc OFB:giros:imprime_cheque,docprt,"Imprimiendo Cheque"
 	 printdoc OFB:giros:PRT_OP_EmisGP,docprt,"Imprimiendo Orden de Pago"
 	//INIT 76,"docprt WAIT 1"	
 	call giros:CDSsval_chkpoint(ANTES_IMPRE_SUB_1)
 antes_impre_chk_1:
-		MSGBOX "ï¿½SE IMPRIMIO CORRECTAMENTE LA ORDEN DE PAGO?", OFB_YESNO2, "ATENCION"
+		MSGBOX "¿SE IMPRIMIO CORRECTAMENTE LA ORDEN DE PAGO?", OFB_YESNO2, "ATENCION"
 		IF (RETVAL != 6) THEN //NO
 			PRINTDOC OFB:giros:PRT_OP_EmisGP,docprt,"(L)IMPRIMIENDO ORDEN DE PAGO"				
-			MSGBOX "ï¿½SE IMPRIMIO CORRECTAMENTE LA ORDEN DE PAGO?", OFB_YESNO2, "ATENCION"
+			MSGBOX "¿SE IMPRIMIO CORRECTAMENTE LA ORDEN DE PAGO?", OFB_YESNO2, "ATENCION"
 			IF (RETVAL != 6) THEN //NO
 				MSGBOX "DEBERA REIMPRIMIRLA DESDE EL JOURNAL.",OFB_OK,"ATENCION"
 				return -2
@@ -89,9 +89,9 @@ antes_impre_chk_1:
 		ENDIF
 	//DO
 	
-	/*	MSGBOX "Se imprimio correctamente el cheque?",OFB_YESNO,"Comprobaciï¿½n"
+	/*	MSGBOX "Se imprimio correctamente el cheque?",OFB_YESNO,"Comprobación"
 		IF (RETVAL != 6) THEN
-			msgbox "ï¿½Presenta defectos fï¿½sicos el cheque?",OFB_YESNO,"Atenciï¿½n"
+			msgbox "¿Presenta defectos físicos el cheque?",OFB_YESNO,"Atención"
 			IF (RETVAL == 6) then
 				DO
 					CALL giros:MISCsupervision
@@ -123,7 +123,7 @@ antes_impre_chk_3:
 							fprint common:csr_string "COMUNIQUESE CON CALL CENTER\nSOLICITANDO LA ANULACION DEL DUPLICADO DEL GIRO %s-%s/%s" \
 								vieja_serie_fld viejo_num_giro_fld viejo_dig_fld
 						endif	
-			    		msgbox common:csr_string,OFB_OK,"Atenciï¿½n"
+			    		msgbox common:csr_string,OFB_OK,"Atención"
 					END IF
 					call giros:CDSsval_chkpoint(ANTES_IMPRE_SUB_4)*/
 antes_impre_chk_4:
@@ -138,7 +138,7 @@ antes_impre_chk_5:
 					
 					clearfield checkpoint_emision // FGB p' q' no entre en el case de recuperacion al volver a la sval...
 
-					MSGBOX "GIRO ANULADO - INGRESE EL NUEVO NRO. DE CHEQUE",OFB_OK,"Atenciï¿½n"
+					MSGBOX "GIRO ANULADO - INGRESE EL NUEVO NRO. DE CHEQUE",OFB_OK,"Atención"
 					RETURN (-2)
 				END IF
 			ELSE
@@ -151,10 +151,10 @@ antes_impre_chk_6:
 			call giros:CDSsval_chkpoint(ANTES_IMPRE_SUB_7)*/
 antes_impre_chk_7:
 		/*	if (es_emision_postal == "N") then
-	    		msgbox "Inserte el cheque original para su anulacion",OFB_OK,"Atenciï¿½n"
+	    		msgbox "Inserte el cheque original para su anulacion",OFB_OK,"Atención"
 	    		giros:leyenda = "ANULADO"
 				INIT 76,"docprt WAIT 0"	
-	    		PRINTDOC OFB:giros:imprime_leyenda,docprt,"Imprimiendo Anulaciï¿½n"
+	    		PRINTDOC OFB:giros:imprime_leyenda,docprt,"Imprimiendo Anulación"
 				INIT 76,"docprt WAIT 1"	
 			end if
 			BREAK

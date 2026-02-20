@@ -1,18 +1,18 @@
-/****o* Pendientes de agrupación/OFB:op:TRANlogin
+/****o* Pendientes de agrupaciï¿½n/OFB:op:TRANlogin
 * NOMBRE
 *   OFB:op:TRANlogin
 * DESCRIPCION
 *   Rutina que se ejecuta cuando el usuario se loguea en MOSAIC
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   Documentación relevante que deberá ser actualizada por la modificación de la rutina
+*   Documentaciï¿½n relevante que deberï¿½ ser actualizada por la modificaciï¿½n de la rutina
 * SOURCE
 */
 #include "optran.h"
@@ -26,7 +26,11 @@ SUB op:TRANlogin
 	LOCAL LMensaje LIKE common:csr_string
 	LOCAL PresNroAux LIKE post:PresNro
 	LOCAL LLong LIKE siaf:i
-    
+	LOCAL l_mp_refund_pend LIKE lib:err_retval
+	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
+	LOCAL l_pres LIKE post:adt_opmp_PresNro
+	LOCAL l_msg LIKE common:csr_string
+
   LET intentos = 0
 
 	;LMB - PS 9780 - 10.06.2008
@@ -174,7 +178,7 @@ SUB op:TRANlogin
 	;SMC paso todo a mayusculas
 	CALL csr:fld_to_upper(op:op_login_id)
 	
-	; Se parametrizó la clave clave_sf1 en el DDPROJ.INI para adecuaciones para el RTJAVA *** MDG
+	; Se parametrizï¿½ la clave clave_sf1 en el DDPROJ.INI para adecuaciones para el RTJAVA *** MDG
 	CALL csr:get_profile_string "SF1" "clave_sf1" common:sf1_clave
     
 	PROTFIELD op_login_id
@@ -605,8 +609,8 @@ SUB op:TRANlogin
 		RESETFLAG drv:mode_flags,no_stack_list
 	END IF
 
-  /*Se agrega el chequeo para saber si los procesos de anulación quedaron inconclusos
-  (Nota de Crédito) - Gabriel Falciola*/
+  /*Se agrega el chequeo para saber si los procesos de anulaciï¿½n quedaron inconclusos
+  (Nota de Crï¿½dito) - Gabriel Falciola*/
   CLEARFIELD post:adt_cativa_discri
   CALL post:CDSverifRelCorr
   CALL post:MISCtermina_anula
@@ -644,7 +648,7 @@ SUB op:TRANlogin
 	//gpb:NI50567
 	common:cantidad_compOPW = post:adt_dgralsuc_compOPW
 
-	//gpb:PS10705 Se parametrizó el tiempo de espera (seccion "SLEEPFACTURA" clave "time" en el DDPROJ.INI) 
+	//gpb:PS10705 Se parametrizï¿½ el tiempo de espera (seccion "SLEEPFACTURA" clave "time" en el DDPROJ.INI) 
 	//para las impresiones de facturas/ticket por DOCPRT
 	common:sleep_factura = 0
   CALL csr:get_profile_string "SLEEPFACTURA" "time" common:sleep_factura
@@ -655,7 +659,7 @@ SUB op:TRANlogin
 		ELSE
 			CALL post:MISCesNumerico(common:sleep_factura)
 			IF (RETVAL != 0) THEN
-				MSGBOX "Debe ingresar valores numéricos en la seccion [SEELEPFACTURA] en el DDPROJ.ini.\nSe setea el valor en cero.",OFB_OK,"ATENCION"
+				MSGBOX "Debe ingresar valores numï¿½ricos en la seccion [SEELEPFACTURA] en el DDPROJ.ini.\nSe setea el valor en cero.",OFB_OK,"ATENCION"
 				common:sleep_factura = 0
 			END IF				
 		END IF
@@ -696,20 +700,51 @@ SUB op:TRANlogin
 		common:adt_mp_termi_integ = "N"
 	END IF
 
-	// Se agrega un hook para recuperar los Refunds incompletos de Smart Point al inicio del sistema
-	IF (common:adt_mp_termi_integ == "S") THEN
-		CALL post:MISCmpRefRecov
+	// Se detecta si quedo algun Refund incompleto para Venta con tarjeta por Smart Point, para indicarle al operador
+	LET l_mp_refund_pend = -2
+	CLEARFIELD l_codseq
+	CLEARFIELD l_pres
+	CLEARFIELD l_msg
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_operacion == "DEV" \
+		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
+		&& post:adt_opmp_codint_mp != "QRI" \
+		&& post:adt_opmp_status_p_PS != "canceled" \
+		&& post:adt_opmp_jnlOK == "N"
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		CDS EXTRACT DSC:post:OperacionesMP_ctx \
+			post:adt_opmp_codseq_nro \
+			post:adt_opmp_PresNro
+		LET l_mp_refund_pend = 0
+		LET l_codseq = post:adt_opmp_codseq_nro
+		LET l_pres = post:adt_opmp_PresNro
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+	IF (l_mp_refund_pend == 0) THEN
+		FPRINT l_msg "SE DETECTO UN REEMBOLSO SIN COMPLETARSE POR UNA CAIDA O INTERRUPCION. DEBE IR A ANULACION DE DOCUMENTOS PARA FINALIZARLO"
+		IF (l_codseq.NUMCHARS > 0) THEN
+			FPRINT l_msg "%s CODSEQ %s" l_msg l_codseq
+		END IF
+		IF (l_pres.NUMCHARS > 0) THEN
+			FPRINT l_msg "%s PRES %s" l_msg l_pres
+		END IF
+		FPRINT l_msg "%s FECHA %s" l_msg common:system_date
+		MSGBOX l_msg,OFB_OK,"AVISO"
 	END IF
 
 		//gpb:PS- 10951
 		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
 ;;	//gbp:NI50546 Mercado Pago
 ;;  //Realiza la verificacion por caida de RT en las operaciones MP (Tx-99600/Tx-99601/Tx99605)
-;;  IF (common:adt_mp_termi_integ == "S") THEN
-;;  	CALL post:MISCmpVerifCaidas
-;;  END IF
+  IF (common:adt_mp_termi_integ == "S") THEN
+  	CALL post:MISCmpVerifCaidas
+  END IF
 	
-	//Verifico si quedò incloncluso un cierre de Lote por Caida del RT y de ser asi termino la journalizacion
+	//Verifico si quedï¿½ incloncluso un cierre de Lote por Caida del RT y de ser asi termino la journalizacion
 	IF (post:codigo_tx == 9030 || post:codigo_tx == 9035)
 		//9030 Cabecera Cierre Lote
 		//9035 Detalle Cierre Lote
@@ -721,7 +756,7 @@ SUB op:TRANlogin
 	//50387 - IPS - mgi REQ 6
 	//Paso a memoria el  valor de Oficina de carga defautl de IPS
 	common:ips_officeCD = giros:adt_dgralsuc_office
-	/* MLD Muevo a un campo no autoclear la cant de dias para depuración */
+	/* MLD Muevo a un campo no autoclear la cant de dias para depuraciï¿½n */
 	giros:giros_dias_bajch = giros:adt_dgralsuc_bajch
 	; Campos que indican si los campos cta y nro de cheque obligan a
 	; ingresar ceros a izquierda *** MDG

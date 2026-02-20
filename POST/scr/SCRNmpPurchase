@@ -76,7 +76,7 @@ SCREEN post:SCRNmpPurchase,4,148,630,190,0,1,14,10,10,0
     SETSIZE 9
     SETFACE 0x0002
     DRAW  TEXT 59,44, \
-"(Recuerde Ingresar a la APP correspondiente en Modo Integrado antes de generar la Orden)"
+"(Recuere que el cliente debe ingresar a la APP correspondiente para realizar el pago)"
 
     SETFONT "Courier New"
     SETFACE 0x0000
