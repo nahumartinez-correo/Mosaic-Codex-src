@@ -27,12 +27,10 @@ SUB op:TRANlogin
 	LOCAL PresNroAux LIKE post:PresNro
 	LOCAL LLong LIKE siaf:i
 	LOCAL l_mp_refund_pend LIKE lib:err_retval
-	LOCAL l_mp_pend_otermi LIKE lib:err_retval
 	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
 	LOCAL l_pres LIKE post:adt_opmp_PresNro
 	LOCAL l_msg LIKE common:csr_string
-	LOCAL l_msg_popup LIKE common:csr_string
-	LOCAL l_ot_term LIKE post:adt_opmp_termi_win
+	LOCAL l_ret_incot LIKE lib:err_retval
 
   LET intentos = 0
 
@@ -739,39 +737,10 @@ SUB op:TRANlogin
 		MSGBOX l_msg,OFB_OK,"AVISO"
 	END IF
 
-		IF (common:adt_mp_termi_integ == "S") THEN
-			DPRINT "[DBG] Verificacion venta inconclusa otra terminal. system_date=[%s] op_login_id=[%s] window_node=[%s]\n" common:system_date op:op_login_id common:window_node
-			LET l_mp_pend_otermi = -2
-			CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-				WHERE post:adt_opmp_status_p_PS != "canceled" \
-				&& post:adt_opmp_jnlOK == "N" \
-				&& post:adt_opmp_fecha == common:system_date \
-				&& post:adt_opmp_login_id == op:op_login_id \
-				&& post:adt_opmp_termi_win != common:window_node \
-				&& post:adt_opmp_codint_mp != "QRI"
-			CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-			IF (CDSRETVAL == 0) THEN
-				LET l_mp_pend_otermi = 0
-				CDS EXTRACT DSC:post:OperacionesMP_ctx \
-					post:adt_opmp_status_p_PS \
-					post:adt_opmp_jnlOK \
-					post:adt_opmp_fecha \
-					post:adt_opmp_login_id \
-					post:adt_opmp_termi_win \
-					post:adt_opmp_codint_mp
-				LET l_ot_term = post:adt_opmp_termi_win
-				DPRINT "[DBG] Verificacion de venta inconclusa en otra terminal. Campo post:adt_opmp_codint_mp = [%s]\n" post:adt_opmp_codint_mp
-				DPRINT "[DBG] OperacionesMP eval: status=[%s] jnlOK=[%s] fecha=[%s] login_id=[%s] termi_win=[%s]\n" post:adt_opmp_status_p_PS post:adt_opmp_jnlOK post:adt_opmp_fecha post:adt_opmp_login_id post:adt_opmp_termi_win
-			END IF
-			CDS ENDSELECT DSC:post:OperacionesMP_ctx
-
-			IF (l_mp_pend_otermi == 0) THEN
-				DPRINT "[DBG] MATCH venta inconclusa otra terminal -> se muestra popup y se hace RETURN -2\n"
-				FPRINT l_msg_popup "Se detectó una venta sin completar en otra terminal. Por favor, loguearse en la misma terminal y completar el proceso\nOperador: %s Terminal: %s" op:op_login_id l_ot_term
-				MSGBOX l_msg_popup,OFB_OK,"AVISO"
-				CALL MISCend_NT
-				RETURN -2
-			END IF
+		CALL op:MISCmpVtaIncOT
+		LET l_ret_incot = RETVAL
+		IF (l_ret_incot == -1) THEN
+			RETURN -1
 		END IF
 
 		//gpb:PS- 10951
