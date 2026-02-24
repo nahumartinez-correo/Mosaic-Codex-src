@@ -26,10 +26,6 @@ SUB op:TRANlogin
 	LOCAL LMensaje LIKE common:csr_string
 	LOCAL PresNroAux LIKE post:PresNro
 	LOCAL LLong LIKE siaf:i
-	LOCAL l_mp_refund_pend LIKE lib:err_retval
-	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
-	LOCAL l_pres LIKE post:adt_opmp_PresNro
-	LOCAL l_msg LIKE common:csr_string
 	LOCAL l_ret_incot LIKE lib:err_retval
 	LET intentos = 0
 
@@ -700,41 +696,7 @@ SUB op:TRANlogin
 		common:adt_mp_termi_integ = "N"
 	END IF
 
-	// Se detecta si quedo algun Refund incompleto para Venta con tarjeta por Smart Point, para indicarle al operador
-	LET l_mp_refund_pend = -2
-	CLEARFIELD l_codseq
-	CLEARFIELD l_pres
-	CLEARFIELD l_msg
-	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-		WHERE post:adt_opmp_fecha == common:system_date \
-		&& post:adt_opmp_login_id == op:op_login_id \
-		&& post:adt_opmp_termi_win == common:window_node \
-		&& post:adt_opmp_operacion == "DEV" \
-		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
-		&& post:adt_opmp_codint_mp != "QRI" \
-		&& post:adt_opmp_status_p_PS != "canceled" \
-		&& post:adt_opmp_jnlOK == "N"
-	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-	IF (CDSRETVAL == 0) THEN
-		CDS EXTRACT DSC:post:OperacionesMP_ctx \
-			post:adt_opmp_codseq_nro \
-			post:adt_opmp_PresNro
-		LET l_mp_refund_pend = 0
-		LET l_codseq = post:adt_opmp_codseq_nro
-		LET l_pres = post:adt_opmp_PresNro
-	END IF
-	CDS ENDSELECT DSC:post:OperacionesMP_ctx
-	IF (l_mp_refund_pend == 0) THEN
-		FPRINT l_msg "SE DETECTO UN REEMBOLSO SIN COMPLETARSE POR UNA CAIDA O INTERRUPCION. DEBE IR A ANULACION DE DOCUMENTOS PARA FINALIZARLO"
-		IF (l_codseq.NUMCHARS > 0) THEN
-			FPRINT l_msg "%s CODSEQ %s" l_msg l_codseq
-		END IF
-		IF (l_pres.NUMCHARS > 0) THEN
-			FPRINT l_msg "%s PRES %s" l_msg l_pres
-		END IF
-		FPRINT l_msg "%s FECHA %s" l_msg common:system_date
-		MSGBOX l_msg,OFB_OK,"AVISO"
-	END IF
+	CALL op:MISCmpRfPend
 
 	CALL op:MISCmpVtaIncOT
 	LET l_ret_incot = RETVAL
