@@ -1,0 +1,62 @@
+/****o* Pendientes de agrupación/OFB:op:MISCmpVtaIncOT
+* NOMBRE
+*   OFB:op:MISCmpVtaIncOT
+* DESCRIPCION
+*   Verifica venta MP inconclusa en otra terminal para el operador logueado
+* ENTRADAS
+*   Campos de contexto de login y tabla OperacionesMP
+* SALIDAS
+*   RETVAL: -1 si corta login, 0 si no hay accion
+* SOURCE
+*/
+#include "src\OP\misc\opmisc.h"
+
+SUB op:MISCmpVtaIncOT
+	LOCAL l_found LIKE lib:err_retval
+	LOCAL l_msg_popup LIKE common:csr_string
+	LOCAL l_ot_term LIKE post:adt_opmp_termi_win
+
+	IF (common:adt_mp_termi_integ != "S") THEN
+		RETURN 0
+	END IF
+
+	DPRINT "[DBG] Verificacion venta inconclusa otra terminal. system_date=[%s] op_login_id=[%s] window_node=[%s]\n" common:system_date op:op_login_id common:window_node
+	LET l_found = -2
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_status_p_PS != "canceled" \
+		&& post:adt_opmp_jnlOK == "N" \
+		&& post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_termi_win != common:window_node
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		LET l_found = 0
+		CDS EXTRACT DSC:post:OperacionesMP_ctx \
+			post:adt_opmp_status_p_PS \
+			post:adt_opmp_jnlOK \
+			post:adt_opmp_fecha \
+			post:adt_opmp_login_id \
+			post:adt_opmp_termi_win \
+			post:adt_opmp_codint_mp
+		LET l_ot_term = post:adt_opmp_termi_win
+		DPRINT "[DBG] Verificacion de venta inconclusa en otra terminal. Campo post:adt_opmp_codint_mp = [%s]\n" post:adt_opmp_codint_mp
+		DPRINT "[DBG] OperacionesMP eval: status=[%s] jnlOK=[%s] fecha=[%s] login_id=[%s] termi_win=[%s]\n" post:adt_opmp_status_p_PS post:adt_opmp_jnlOK post:adt_opmp_fecha post:adt_opmp_login_id post:adt_opmp_termi_win
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	IF (l_found == 0) THEN
+		DPRINT "[DBG] MATCH venta inconclusa otra terminal -> se muestra popup y se hace RETURN -1\n"
+		FPRINT l_msg_popup "Venta incompleta en la Terminal [%s] para el Operador [%s] . Por favor, loguearse alli y completar el proceso\n" l_ot_term op:op_login_id
+		MSGBOX l_msg_popup,OFB_OK,"AVISO"
+		CLEARFIELD op:adt_node_id
+		CALL OFB:op:CDSadt_op_save
+		CALL op:MISCend_NT
+		RETURN -1
+	END IF
+
+	DPRINT "[DBG] No se encontró venta inconclusa\n"
+
+	RETURN 0
+END SUB
+
+/******/
