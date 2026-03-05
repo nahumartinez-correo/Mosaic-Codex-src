@@ -1,0 +1,53 @@
+/****o* Pendientes de agrupación/OFB:op:MISCmpVtaIncAT
+* NOMBRE
+*   OFB:op:MISCmpVtaIncAT
+* DESCRIPCION
+*   Verifica venta MP inconclusa en la misma terminal y evalua at_terminal
+* ENTRADAS
+*   Campos de contexto de login y tabla OperacionesMP
+* SALIDAS
+*   RETVAL: 0
+* SOURCE
+*/
+#include "src\OP\misc\opmisc.h"
+
+SUB op:MISCmpVtaIncAT
+	LOCAL l_found LIKE lib:err_retval
+	LOCAL l_idx LIKE siaf:i
+	LOCAL l_inf LIKE siaf:i
+
+	IF (common:adt_mp_termi_integ != "S") THEN
+		RETURN 0
+	END IF
+
+	LET l_found = -2
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_status_p_PS != "canceled" \
+		&& post:adt_opmp_jnlOK == "N" \
+		&& post:adt_opmp_fecha == common:system_date \
+		&& post:adt_opmp_login_id == op:op_login_id \
+		&& post:adt_opmp_termi_win == common:window_node \
+		&& post:adt_opmp_codint_mp != "QRI"
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		LET l_found = 0
+		CDS EXTRACT DSC:post:OperacionesMP_ctx post:adt_opmp_order_id_PS
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
+	IF (l_found == 0 && post:adt_opmp_order_id_PS.NUMCHARS > 0) THEN
+		LET post:mp_order_id_PS = post:adt_opmp_order_id_PS
+		CALL post:MISCmpGetOrderPoint
+		IF (post:mp_response_PS == 409) THEN
+			LET l_inf = 0
+			CALL csr:str_search(post:mp_response_message,"at_terminal",l_idx,l_inf)
+			IF (RETVAL == 0) THEN
+				MSGBOX "Se detectó una venta incompleta. Deberá cancelarla desde el Point para continuar",OFB_OK,"AVISO"
+			END IF
+		END IF
+	END IF
+
+	RETURN 0
+END SUB
+
+/******/

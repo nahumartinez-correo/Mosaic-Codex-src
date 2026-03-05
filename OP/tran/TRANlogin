@@ -736,14 +736,15 @@ SUB op:TRANlogin
 		MSGBOX l_msg,OFB_OK,"AVISO"
 	END IF
 
-	CALL op:MISCmpVtaIncOT
-	LET l_ret_incot = RETVAL
-	IF (l_ret_incot == -1) THEN
-		RETURN -1
-	END IF
+		CALL op:MISCmpVtaIncOT
+		LET l_ret_incot = RETVAL
+		IF (l_ret_incot == -1) THEN
+			RETURN -1
+		END IF
+		CALL op:MISCmpVtaIncAT
 
-		//gpb:PS- 10951
-		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
+			//gpb:PS- 10951
+			//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
 	;;	//gbp:NI50546 Mercado Pago
 	;;  //Realiza la verificacion por caida de RT en las operaciones MP (Tx-99600/Tx-99601/Tx99605)
 	  IF (common:adt_mp_termi_integ == "S") THEN
