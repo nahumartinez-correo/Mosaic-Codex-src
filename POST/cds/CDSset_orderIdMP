@@ -1,0 +1,27 @@
+/****o* Mercado Pago/OFB:post:CDSset_orderIdMP
+* NOMBRE
+*   OFB:post:CDSset_orderIdMP
+* DESCRIPCION
+*   Actualiza el Order ID Smart Point en la PresuAct
+* SOURCE
+*/
+#include "postcds.h"
+
+SUB post:CDSset_orderIdMP(prmOrderId)
+	LET post:op_operator_id = op:op_operator_id
+
+	CDS SELECT FROM DSC:TABPresuActi BECOMES DSC:CONPresuActi WHERE  \
+						post:op_operator_id == fld:post:op_operator_id
+	CDS FINDFIRST DSC:CONPresuActi LOCK
+
+	If ( CDSRETVAL == -801)
+		 //ERROR
+	else
+		CDS APPEND DSC:CONPresuActi prmOrderId AS post:mp_order_id_PS
+		CDS UPDATE DSC:CONPresuActi lock
+	end if
+	CDS UNLOCK DSC:CONPresuActi
+	CDS ENDSELECT DSC:CONPresuActi
+END SUB
+
+/*******/

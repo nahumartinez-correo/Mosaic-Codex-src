@@ -62,6 +62,7 @@ SUB post:MISCmpPostOrderPoint
 		DPRINT "post:mp_status][%s]\n" post:mp_status
 		DPRINT "post:mp_order_id][%s]\n" post:mp_order_id
 		
+		CALL post:CDSset_orderIdMP(post:mp_order_id_PS)
 		//Grabo en la tabla OperacionesMP
 		CALL post:MISCsaveOpeMP(post:mp_operacion,post:mp_comandos)
 		

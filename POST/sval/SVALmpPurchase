@@ -69,6 +69,7 @@ SUB post:SVALmpPurchase
 
             CASE "expired"
                 CALL post:CDSopmp_jnlFallo("VEN")
+                CALL post:CDSset_orderIdMP("")
                 post:mp_msg_guia = "Orden expirada. Presione ENTER para generar una nueva o ESC para cancelar."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
@@ -76,6 +77,7 @@ SUB post:SVALmpPurchase
 
             CASE "canceled"
                 CALL post:CDSopmp_jnlFallo("VEN")
+                CALL post:CDSset_orderIdMP("")
                 post:mp_msg_guia = "Orden cancelada. ESC para salir."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
@@ -99,6 +101,7 @@ SUB post:SVALmpPurchase
 
 
                     IF (post:mp_status_pago_PS == "processed" || post:mp_status_pago_PS == "approved")
+                        CALL post:CDSset_orderIdMP("")
                         post:mp_msg_guia = "Pago confirmado correctamente."
                         CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                         refresh window
@@ -107,6 +110,7 @@ SUB post:SVALmpPurchase
 
                     IF (post:mp_status_pago_PS == "canceled") THEN
                         CALL post:CDSopmp_jnlFallo("VEN")
+                        CALL post:CDSset_orderIdMP("")
                         post:mp_msg_guia = "Orden cancelada."
                         CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                         refresh window
@@ -123,6 +127,7 @@ SUB post:SVALmpPurchase
                 END WHILE
                 // Si salió del WHILE porque cambió el estado (ya no es at_terminal),
                 IF (post:mp_status_pago_PS == "processed" || post:mp_status_pago_PS == "approved") THEN
+                    CALL post:CDSset_orderIdMP("")
                     post:mp_msg_guia = "Pago confirmado correctamente."
                     CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                     refresh window
@@ -131,6 +136,7 @@ SUB post:SVALmpPurchase
 
                 IF (post:mp_status_pago_PS == "canceled") THEN
                     CALL post:CDSopmp_jnlFallo("VEN")
+                    CALL post:CDSset_orderIdMP("")
                     post:mp_msg_guia = "Orden cancelada. Presione ESC para salir."
                     CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                     refresh window
@@ -142,6 +148,7 @@ SUB post:SVALmpPurchase
                 RETURN -2
 
             CASE "processed"
+                CALL post:CDSset_orderIdMP("")
                 post:mp_msg_guia = "Pago procesado correctamente."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
@@ -149,18 +156,21 @@ SUB post:SVALmpPurchase
 
             CASE "failed"
                 CALL post:CDSopmp_jnlFallo("VEN")
+                CALL post:CDSset_orderIdMP("")
                 post:mp_msg_guia = "Pago rechazado o fallido. ESC para cancelar."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
                 RETURN -2
 
             CASE "action_required"
+                CALL post:CDSset_orderIdMP("")
                 post:mp_msg_guia = "Atención: requiere acción manual en la terminal."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
                 RETURN -2
 
             CASE "refunded"
+                CALL post:CDSset_orderIdMP("")
                 post:mp_msg_guia = "Pago reembolsado. No es posible continuar con esta operación."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
