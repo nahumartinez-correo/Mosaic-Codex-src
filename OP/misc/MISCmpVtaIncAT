@@ -1,0 +1,43 @@
+/****o* Pendientes de agrupación/OFB:op:MISCmpVtaIncAT
+* NOMBRE
+*   OFB:op:MISCmpVtaIncAT
+* DESCRIPCION
+*   Verifica venta MP inconclusa en la misma terminal y evalua at_terminal
+* ENTRADAS
+*   Campos de contexto de login y tabla OperacionesMP
+* SALIDAS
+*   RETVAL: 0
+* SOURCE
+*/
+#include "src\OP\misc\opmisc.h"
+
+SUB op:MISCmpVtaIncAT
+	LOCAL l_idx LIKE siaf:i
+	LOCAL l_inf LIKE siaf:i
+
+	IF (common:adt_mp_termi_integ != "S") THEN
+		RETURN 0
+	END IF
+
+	IF (post:mp_order_idLG.NUMCHARS == 0) THEN
+		RETURN 0
+	END IF
+
+	LET post:mp_order_id_PS = post:mp_order_idLG
+	CALL post:MISCmpGetOrderPoint
+	IF (post:mp_response_PS != 409) THEN
+		CLEARFIELD post:mp_order_idLG
+		CALL post:CDSset_orderIdMP("")
+		RETURN 0
+	END IF
+
+	LET l_inf = 0
+	CALL csr:str_search(post:mp_response_message,"at_terminal",l_idx,l_inf)
+	IF (RETVAL == 0) THEN
+		MSGBOX "Se detectó una venta incompleta. Deberá cancelarla desde el Point para continuar",OFB_OK,"AVISO"
+	END IF
+
+	RETURN 0
+END SUB
+
+/******/

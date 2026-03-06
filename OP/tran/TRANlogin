@@ -736,14 +736,25 @@ SUB op:TRANlogin
 		MSGBOX l_msg,OFB_OK,"AVISO"
 	END IF
 
-	CALL op:MISCmpVtaIncOT
-	LET l_ret_incot = RETVAL
-	IF (l_ret_incot == -1) THEN
-		RETURN -1
-	END IF
+		CALL op:MISCmpVtaIncOT
+		LET l_ret_incot = RETVAL
+		IF (l_ret_incot == -1) THEN
+			RETURN -1
+		END IF
+		CLEARFIELD post:mp_order_idLG
+		CDS SELECT FROM DSC:post:TABPresuActi BECOMES DSC:post:CONPresuActi \
+			WHERE post:op_operator_id == fld:op:op_operator_id
+		CDS FINDFIRST DSC:post:CONPresuActi NOLOCK
+		IF (CDSRETVAL == 0) THEN
+			CDS EXTRACT DSC:post:CONPresuActi post:mp_order_id_PS INTO post:mp_order_idLG
+		END IF
+		CDS ENDSELECT DSC:post:CONPresuActi
+		IF (post:mp_order_idLG.NUMCHARS > 0) THEN
+			CALL op:MISCmpVtaIncAT
+		END IF
 
-		//gpb:PS- 10951
-		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
+			//gpb:PS- 10951
+			//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
 	;;	//gbp:NI50546 Mercado Pago
 	;;  //Realiza la verificacion por caida de RT en las operaciones MP (Tx-99600/Tx-99601/Tx99605)
 	  IF (common:adt_mp_termi_integ == "S") THEN

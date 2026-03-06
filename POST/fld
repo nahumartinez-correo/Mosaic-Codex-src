@@ -7170,6 +7170,7 @@ mp_payment_type  ASCII 20 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0                  //
 //Mercado pago - Smart Point
 mp_response_PS ASCII 4 1 ~ SCDEAscurDmpbdha 0 0 0 0 0 0 OFB:siaf:DUREpipe      // Respuesta del HOST de Mercado Pago
 mp_order_id_PS ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0	                   // ID de la Orden de Pago
+mp_order_idLG ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0
 mp_payment_id_PS ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0	               // ID del pago
 mp_status_PS ASCII 15 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0	  		           // Estado de la Orden de pago CLOSED , Tengo que actualizar el estado!!!
 mp_status_pago_PS ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0	                  // Estado del pago "approved"
