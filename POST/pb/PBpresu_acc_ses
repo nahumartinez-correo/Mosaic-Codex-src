@@ -1,0 +1,23 @@
+/****o* Sesión Correo/OFB:post:PBpresu_acc_ses
+* NOMBRE
+*   OFB:post:PBpresu_acc_ses
+* DESCRIPCION
+*   Wrapper del botón de accion de presupuesto para SCRNestado_sesion.
+* ENTRADAS
+* SALIDAS
+* SOURCE
+*/
+#include "postpb.h"
+
+SUB post:PBpresu_acc_ses
+
+	CALL post:MISCvalBloqATerm
+	IF (RETVAL == 1) THEN
+		RETURN 0
+	END IF
+
+	CALL plataf:estado_presu_accion
+	RETURN 0
+END SUB
+
+/*******/

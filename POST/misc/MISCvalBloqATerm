@@ -1,0 +1,29 @@
+/****o* Sesión Correo/OFB:post:MISCvalBloqATerm
+* NOMBRE
+*   OFB:post:MISCvalBloqATerm
+* DESCRIPCION
+*   Valida bloqueo por venta incompleta en Point con status "at_terminal".
+* ENTRADAS
+* SALIDAS
+*   RETVAL: 1 -> bloqueo vigente
+*   RETVAL: 0 -> sin bloqueo
+* SOURCE
+*/
+#include "postmisc.h"
+
+SUB post:MISCvalBloqATerm
+
+	IF (post:mp_hay_orden_at_term == 0) THEN
+		RETURN 0
+	END IF
+
+	CALL op:MISCmpBloqueoAT
+	IF (RETVAL == 1) THEN
+		MSGBOX "Se detecto una venta incompleta en el Point. Debera cancelarla desde el Point para continuar",OFB_OK,"AVISO"
+		RETURN 1
+	END IF
+
+	RETURN 0
+END SUB
+
+/*******/

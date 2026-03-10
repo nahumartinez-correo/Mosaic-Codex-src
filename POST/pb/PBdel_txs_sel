@@ -1,14 +1,19 @@
-/****o* Sesión Correo/OFB:post:PBdel_txs_sel
+/****o* SesiÃ³n Correo/OFB:post:PBdel_txs_sel
 * NOMBRE
 *   OFB:post:PBdel_txs_sel
 * DESCRIPCION
-*   Borra una transacción de la Grilla del Presupuesto
+*   Borra una transacciÃ³n de la Grilla del Presupuesto
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+	CALL post:MISCvalBloqATerm
+	IF (RETVAL == 1) THEN
+		RETURN (-2)
+	END IF
+
+*   ParÃ¡metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberÃ¡n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   SCR:post:SCRNestado_sesion
 * DOCUMENTACION
@@ -94,7 +99,7 @@ SUB post:PBdel_txs_sel
 			CALL csr:myPickcontrol("Tx_ses_selected",common:csr_string,idx)
 			IF (RETVAL < 0) THEN
 				//RETURN (-2)
-				//No hay más tx seleccionadas para borrar?????
+				//No hay mÃ¡s tx seleccionadas para borrar?????
 				BREAK
 			END IF
 

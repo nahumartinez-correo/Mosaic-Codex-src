@@ -1,18 +1,18 @@
-/****s* Pendientes de agrupaciÛn/SCR:post:SCRNestado_sesion
+/****s* Pendientes de agrupaci√≥n/SCR:post:SCRNestado_sesion
 * NOMBRE
 *   SCR:post:SCRNestado_sesion
 * DESCRIPCION
 *   Comportamiento del objeto (obligatorio)
 * ENTRADAS
-*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber·n ser analizados al modificar el objeto actual
+*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   DocumentaciÛn relevante que deber· ser actualizada por la modificaciÛn de la rutina
+*   Documentaci√≥n relevante que deber√° ser actualizada por la modificaci√≥n de la rutina
 * SOURCE
 */
 #include "postscr.h"
@@ -69,7 +69,7 @@ SCREEN post:SCRNestado_sesion,421,35,218,370,0,1,20,18,10,0
     SETFONT "Arial"
     DRAW  PUSHBUTTON -,127,285,86,21,"CANC.PRESU.",post:PBcancela_sesion
     DRAW  PUSHBUTTON -,10,285,79,21,"BORRAR TRX.",post:PBdel_txs_sel
-    DRAW  RELIEFBUTTON plataf:PBpresu_acc,13,315,196,17,4,20,23,10,3,tlr:f12button,OFB:plataf:estado_presu_accion
+    DRAW  RELIEFBUTTON plataf:PBpresu_acc,13,315,196,17,4,20,23,10,3,tlr:f12button,post:PBpresu_acc_ses
     DRAW  LINE 10,67, 10,255, 1,1,0
     SETFCOLOR 0x05 
     DRAW  LINE 11,67, 11,255, 1,1,0
