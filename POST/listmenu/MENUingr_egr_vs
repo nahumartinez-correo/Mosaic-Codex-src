@@ -24,7 +24,7 @@ LIST post:MENUingr_egr_vs template:DT_driver_menu
     MEMBER 0 0 "2\r\nMOTIVOS\r\nAGRUPADOS" LST:TRANmot_agrup " "
     MEMBER 0 0 "3\r\nOFICIOS\r\nJUDICIALES" LST:siaf:TRAN7210 " "
     MEMBER 0 0 " " 0
-    MEMBER 0 0 "5\r\nRETIRO\r\nDE DINERO" LST:post:TRANretiro_dinero " "
+    MEMBER 0 0 " " 0 //"5\r\nRETIRO\r\nDE DINERO" LST:post:TRANretiro_dinero " "
     MEMBER 0 0 " " 0
     MEMBER 0 0 " " 0
     MEMBER 0 0 " " 0    

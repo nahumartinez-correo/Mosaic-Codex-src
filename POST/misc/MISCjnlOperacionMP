@@ -1,14 +1,14 @@
-/****o* Pendientes de agrupación/OFB:post:MISCjnlOperacionMP
+/****o* Pendientes de agrupaciï¿½n/OFB:post:MISCjnlOperacionMP
 * NOMBRE
 *   OFB:post:MISCjnlOperacionMP
 * DESCRIPCION
 *   Journaliza las operaciones de la tabla OperacionesMP
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   post:JNLmulti_MedioPag
 * DOCUMENTACION
@@ -37,7 +37,7 @@ SUB post:MISCjnlOperacionMP
 	/********************************************************************************************************************/
 		
 	//Si es QR Integrado	
-	IF (post:adt_opmp_codint_mp == "QRI") THEN
+	IF (post:mp_cod_int_glob == "QRI") THEN
 		//Copio listas
 		CALL csr:proc_list(F_COPY, LST:post:LISTget_opmp_orderQR, LST:post:LISTjnl_opmp_orderQR)
 		CALL csr:proc_list(F_COPY, LST:post:LISTget_opmp_orderID, LST:post:LISTjnl_opmp_orderID)

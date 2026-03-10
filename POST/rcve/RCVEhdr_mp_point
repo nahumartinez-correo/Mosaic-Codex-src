@@ -18,15 +18,14 @@
 */
 #include "postrcve.h"
 
-SUB post:RCVEhdr_mp
+SUB post:RCVEhdr_mp_point
 	LOCAL l_bin_mensaje	LIKE siaf:doc_ptmo
 	LOCAL l_long LIKE siaf:idx
-	
+	LOCAL len105 LIKE post:cantidad
 	post:flags_mensaje = 0
 	post:flags_mensaje_adic = 0
-	
-	CALL csr:proc_list(F_CLEAR,LST:LISTcomunic_mp)
-	
+
+	;CALL csr:proc_list(F_CLEAR,LST:LISTcomunic_mp)
 	COMM GET common:csr_string FROM MSG TYPE ASCII LENGTH 2
 
 	;Primary BitMap    (campos del 02 al 064)
@@ -217,10 +216,10 @@ SUB post:RCVEhdr_mp
 	IF (TESTFLAG(post:flags_mensaje,b001)) THEN
 
 		IF (TESTFLAG(post:flags_mensaje,b105)) THEN
-			COMM GET Longitud_105 MSG TYPE BCD LENGTH 2
-			COMM GET cantRegBulk MSG TYPE ASCII LENGTH 3
-			Longitud_105 = Longitud_105 - 3
-			comm get BulkFld_105 MSG TYPE ASCII LENGTH Longitud_105
+			COMM GET len105 MSG TYPE BCD LENGTH 2
+			LET post:Longitud_105 = len105
+			COMM GET post:BulkFld_105 MSG TYPE ASCII LENGTH len105
+			DPRINT "[DBG] Campo105 completo len=%d contenido[%s]\n" Longitud_105 BulkFld_105 
 		END IF
 
 		IF (TESTFLAG(post:flags_mensaje,b106)) THEN

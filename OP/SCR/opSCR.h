@@ -1,4 +1,4 @@
-#include "C:\moaproj\V47.10\src\INCLUDE\ofbdefs.h"
-#include "C:\MOA\src\include\ofb\desktop.h"
-#include "C:\moaproj\V47.10\src\INCLUDE\color.h"
+#include "ofbdefs.h"
+#include "desktop.h"
+#include "color.h"
 #include "cl.h"

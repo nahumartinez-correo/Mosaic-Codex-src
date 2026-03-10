@@ -4,11 +4,11 @@
 * DESCRIPCION
 *   Rutina que recibe los datos correspondientes al mensaje de Servicios Mercado Pago
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *  post:OFBconsume_ws_mp
 * DOCUMENTACION
@@ -19,7 +19,12 @@
 
 SUB post:RCVEconsulta_mp
 
-	CALL post:RCVEhdr_mp
+	IF (post:adt_tmp_codint_mp == "MPC" || post:adt_tmp_codint_mp == "MPD") THEN
+		CALL post:RCVEhdr_mp_point
+	ELSE
+		CALL post:RCVEhdr_mp
+	END	IF
+
 	IF (hcomm:tran_status == HOST_ACCEPTED)
 		CALL post:RCVEgral_mp
 		IF (RETVAL < 0) THEN

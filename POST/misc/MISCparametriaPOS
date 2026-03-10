@@ -1,14 +1,14 @@
-/****o* Pendientes de agrupación/OFB:post:MISCparametriaPOS
+/****o* Pendientes de agrupaciï¿½n/OFB:post:MISCparametriaPOS
 * NOMBRE
 *   OFB:post:MISCparametriaPOS
 * DESCRIPCION
 *   Carga la parametria de la tabla Tarjeta_POS
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   post:CDSCodInt_select
 *		post:PBMedio_CodInt_cod
@@ -49,6 +49,7 @@ SUB post:MISCparametriaPOS
 			//NI50546 - Mercado Pago
 			IF (post:adt_tpos_codint_sap == "130410") THEN
 				post:adt_tmp_codint_mp = post:adt_tpos_codint_vpi
+				post:mp_cod_int_glob = post:adt_tmp_codint_mp
 			END IF
 			
 			LET post:codint_tarj_desc = post:adt_tpos_tarj_desc

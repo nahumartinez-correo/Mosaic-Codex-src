@@ -15,7 +15,7 @@
 *   NI50546 Mercado Pago 
 * SOURCE
 */
-#include "postsval.h"
+#include "src\POST\sval\postsval.h"
 
 SUB post:SVALmpPurchase
 
@@ -35,6 +35,8 @@ SUB post:SVALmpPurchase
         CALL post:MISCmpPostOrderPoint
         IF (mp_response_PS == 200 || mp_response_PS == 201)
             post:mp_msg_guia = "Presione ENTER, luego de realizar el cobro, para finalizar el Presupuesto."
+            post:mp_recov_order_id = post:mp_order_id_PS
+            CALL post:CDSRecov_Order_Id_PS
         ELSE
             post:mp_msg_guia = "Orden de cobro no generada. Presione ENTER para reintentar o ESC para cancelar."
         END IF 
@@ -62,7 +64,7 @@ SUB post:SVALmpPurchase
 
             // ---------- Etapa inicial ----------
             CASE "created"
-                post:mp_msg_guia = "Orden creada. Realice el cobro en la terminal y presione ENTER para continuar."
+                post:mp_msg_guia = "Orden creada. Realice el cobro en el Point y presione ENTER para continuar."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
                 RETURN -2
@@ -76,7 +78,7 @@ SUB post:SVALmpPurchase
 
             CASE "canceled"
                 CALL post:CDSopmp_jnlFallo("VEN")
-                post:mp_msg_guia = "Orden cancelada. ESC para salir."
+                post:mp_msg_guia = "Orden cancelada. Presione ESC para salir."
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
                 RETURN -2
@@ -113,6 +115,14 @@ SUB post:SVALmpPurchase
                         RETURN -2
                     END IF
 
+                    IF (post:mp_status_pago_PS == "expired") THEN
+                        CALL post:CDSopmp_jnlFallo("VEN")
+                        post:mp_msg_guia = "Orden expirada."
+                        CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
+                        refresh window
+                        RETURN -2
+                    END IF
+
                     LET retries = retries + 1
 
                     IF (retries == 5) THEN
@@ -132,6 +142,14 @@ SUB post:SVALmpPurchase
                 IF (post:mp_status_pago_PS == "canceled") THEN
                     CALL post:CDSopmp_jnlFallo("VEN")
                     post:mp_msg_guia = "Orden cancelada. Presione ESC para salir."
+                    CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
+                    refresh window
+                    RETURN -2
+                END IF
+
+                IF (post:mp_status_pago_PS == "expired") THEN
+                    CALL post:CDSopmp_jnlFallo("VEN")
+                    post:mp_msg_guia = "Orden expirada. Presione ESC para salir."
                     CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                     refresh window
                     RETURN -2

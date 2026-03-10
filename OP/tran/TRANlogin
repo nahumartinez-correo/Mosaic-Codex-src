@@ -26,10 +26,6 @@ SUB op:TRANlogin
 	LOCAL LMensaje LIKE common:csr_string
 	LOCAL PresNroAux LIKE post:PresNro
 	LOCAL LLong LIKE siaf:i
-	LOCAL l_mp_refund_pend LIKE lib:err_retval
-	LOCAL l_codseq LIKE post:adt_opmp_codseq_nro
-	LOCAL l_pres LIKE post:adt_opmp_PresNro
-	LOCAL l_msg LIKE common:csr_string
 	LOCAL l_ret_incot LIKE lib:err_retval
 	LET intentos = 0
 
@@ -541,6 +537,17 @@ SUB op:TRANlogin
 	; Repara AuxIva en el caso de que se halla caido el sistema cuando se
 	; modificaba una tx *** MDG
 	CALL post:MISCreparoAuxIva
+
+	// Se valida si quedó alguna venta inconclusa con status "at_terminal", para inhabilitar la generacion de nuevas ordenes
+	CALL op:MISCmpVtaIncAT
+	
+	// Se verifica si existe una orden en funcion del valor devuelto por la funcion
+	IF ( RETVAL == 0 ) THEN
+		post:mp_hay_orden_at_term = 0
+	ELSE
+		post:mp_hay_orden_at_term = 1
+	ENDIF
+
 	/* Agrego lectura de Estado de presupuesto */
 	CALL post:MISCcheckEstadoPresu
 	// 21-07-1998 PJM se agrega que se lean los datos de Pago Facil
@@ -701,54 +708,27 @@ SUB op:TRANlogin
 	END IF
 
 	// Se detecta si quedo algun Refund incompleto para Venta con tarjeta por Smart Point, para indicarle al operador
-	LET l_mp_refund_pend = -2
-	CLEARFIELD l_codseq
-	CLEARFIELD l_pres
-	CLEARFIELD l_msg
-	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
-		WHERE post:adt_opmp_fecha == common:system_date \
-		&& post:adt_opmp_login_id == op:op_login_id \
-		&& post:adt_opmp_termi_win == common:window_node \
-		&& post:adt_opmp_operacion == "DEV" \
-		&& post:adt_opmp_comandos == "POINT_REFUND_POST" \
-		&& post:adt_opmp_codint_mp != "QRI" \
-		&& post:adt_opmp_status_p_PS != "canceled" \
-		&& post:adt_opmp_jnlOK == "N"
-	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
-	IF (CDSRETVAL == 0) THEN
-		CDS EXTRACT DSC:post:OperacionesMP_ctx \
-			post:adt_opmp_codseq_nro \
-			post:adt_opmp_PresNro
-		LET l_mp_refund_pend = 0
-		LET l_codseq = post:adt_opmp_codseq_nro
-		LET l_pres = post:adt_opmp_PresNro
-	END IF
-	CDS ENDSELECT DSC:post:OperacionesMP_ctx
-	IF (l_mp_refund_pend == 0) THEN
-		FPRINT l_msg "SE DETECTO UN REEMBOLSO SIN COMPLETARSE POR UNA CAIDA O INTERRUPCION. DEBE IR A ANULACION DE DOCUMENTOS PARA FINALIZARLO"
-		IF (l_codseq.NUMCHARS > 0) THEN
-			FPRINT l_msg "%s CODSEQ %s" l_msg l_codseq
-		END IF
-		IF (l_pres.NUMCHARS > 0) THEN
-			FPRINT l_msg "%s PRES %s" l_msg l_pres
-		END IF
-		FPRINT l_msg "%s FECHA %s" l_msg common:system_date
-		MSGBOX l_msg,OFB_OK,"AVISO"
-	END IF
+	CALL op:MISCmpRfPend
 
+	// Se detecta si quedo alguna venta inconclusa en otra terminal para el operador, y restringir su operacion
 	CALL op:MISCmpVtaIncOT
 	LET l_ret_incot = RETVAL
 	IF (l_ret_incot == -1) THEN
 		RETURN -1
 	END IF
 
+	// Se verifica si el flag indica que quedo una orden "at_terminal" sin completar
+	IF ( post:mp_hay_orden_at_term != 0 ) THEN
+		CALL op:MISCmpBloqueoAT
+	ENDIF
+
 		//gpb:PS- 10951
 		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
 	;;	//gbp:NI50546 Mercado Pago
 	;;  //Realiza la verificacion por caida de RT en las operaciones MP (Tx-99600/Tx-99601/Tx99605)
-	  IF (common:adt_mp_termi_integ == "S") THEN
-	  	CALL post:MISCmpVerifCaidas
-	  END IF
+//	  IF (common:adt_mp_termi_integ == "S") THEN
+//	  	CALL post:MISCmpVerifCaidas
+//	  END IF
 	
 	//Verifico si qued� incloncluso un cierre de Lote por Caida del RT y de ser asi termino la journalizacion
 	IF (post:codigo_tx == 9030 || post:codigo_tx == 9035)

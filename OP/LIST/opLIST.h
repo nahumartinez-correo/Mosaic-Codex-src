@@ -1,1 +1,1 @@
-#include "C:\moaproj\V47.10\src\INCLUDE\color.h"
+#include "color.h"

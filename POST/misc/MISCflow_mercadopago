@@ -15,7 +15,7 @@
 *   NI50546 Mercado Pago 
 * SOURCE
 */
-#include "postmisc.h"
+#include "src\POST\misc\postmisc.h"
 
 SUB post:MISCflow_mercadopago
 	SETFLAG drv:mode_flags,popup_mode
@@ -40,9 +40,9 @@ SUB post:MISCflow_mercadopago
 						//Si existe la Orden y no se efectuo el pago entonces cancelo la Orden  
 						CALL post:MISCmpDelOrderPoint
 						IF (post:mp_response_PS == 409) THEN
-							WHILE (post:mp_status_PS != "canceled" && post:mp_status_PS != "processed" && post:mp_status_PS != "failed" && post:mp_status_PS != "action_required") THEN
+							WHILE (post:mp_status_PS != "canceled" && post:mp_status_PS != "processed" && post:mp_status_PS != "failed" && post:mp_status_PS != "action_required" && post:mp_status_PS != "expired") THEN
 								CALL post:MISCmpGetOrderPoint
-								IF (post:mp_status_PS != "canceled" && post:mp_status_PS != "failed") THEN
+								IF (post:mp_status_PS != "processed" && post:mp_status_PS != "canceled" && post:mp_status_PS != "failed") THEN
 									MSGBOX "Debe cancelar la orden de pago generada desde la terminal Point",0x00,"ATENCION"
 								END IF
 							END WHILE
@@ -65,6 +65,11 @@ SUB post:MISCflow_mercadopago
 							//Actualizo la marca en la tabla OperacionesMP
 							CALL post:CDSopmp_jnlFallo("VEN")
 							MSGBOX "La orden requiere accion manual. Se cancela la orden",0x00,"ATENCION"
+							RETURN -2
+						ELSEIF (post:mp_status_PS == "expired") THEN
+							//Actualizo la marca en la tabla OperacionesMP
+							CALL post:CDSopmp_jnlFallo("VEN")
+							MSGBOX "La orden expiro. Se cancela la orden",0x00,"ATENCION"
 							RETURN -2
 						END IF
 					END IF
@@ -126,6 +131,8 @@ SUB post:MISCflow_mercadopago
     LET post:Nro_Lote_Pos = post:mp_order_id     
     LET post:NroTransac = post:mp_auth_code
     LET post:Tipo_Operacion_Pos = "ONLINE"
+	post:mp_recov_order_id = ""
+    CALL post:CDSRecov_Order_Id_PS
   END IF
 	
 	REFRESH post:NroCompPago2

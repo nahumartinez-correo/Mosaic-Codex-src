@@ -26,7 +26,7 @@ SUB post:CDSopmp_jnlOK(p_operacion)
 	LET l_opmp_jnlOK = "S"
 	LET l_operacion = p_operacion
 	
-  IF (post:adt_opmp_codint_mp == "QRI") THEN
+  IF (post:mp_cod_int_glob == "QRI") THEN
     SELECT (l_operacion)
       CASE "PAYMENT"
         CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \

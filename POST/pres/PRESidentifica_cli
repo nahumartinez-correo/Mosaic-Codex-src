@@ -1,14 +1,14 @@
-/****o* Sesión Correo/OFB:post:PRESidentifica_cli
+/****o* Sesiï¿½n Correo/OFB:post:PRESidentifica_cli
 * NOMBRE
 *   OFB:post:PRESidentifica_cli
 * DESCRIPCION
 *   Rutina PRES del Inicio de Sesion.
 * ENTRADAS
-*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parï¿½metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   RETURN (-1): Sale de la transaccion ante una validacion incorrecta en la rutina general siaf:PRESfecha_hora.
 * IMPACTOS
-*   Otros objetos que deberán ser analizados al modificar el objeto actual
+*   Otros objetos que deberï¿½n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   LST:post:TRANidentifica_cli
 *   LST:post:TRANident_sin_scr
@@ -32,6 +32,8 @@ SUB post:PRESidentifica_cli
 	siaf:imprime_comprobante = "N"
 	
 	tlr:jnl_date = common:system_date
+
+	post:mp_cod_int_glob = " "
 	
 	/* Inicializo en Cero los Dos Campos de la Tabla Presu */
 	PresEst = 0
@@ -110,7 +112,7 @@ SUB post:PRESidentifica_cli
 	CALL post:MISClogCampos
 	#endif
 	/*se realiza para estado de presupuesto post:estado_presu = 1,
-	la limpieza (inicializacion vacía) de los siguientes campos*/  
+	la limpieza (inicializacion vacï¿½a) de los siguientes campos*/  
 	IF (post:estado_presu == 1) THEN
 		CLEARFIELD post:importe_sesion
 		CLEARFIELD post:Importe_sin_iva 
@@ -149,12 +151,12 @@ SUB post:PRESidentifica_cli
 	 RETURN (-1)  /* sale de la transaccion dentro de un pres */
 	END IF
 	
-	;Si es reemplazo de cheques describo que la sesión es de reemplazo de cheques *** MDG
+	;Si es reemplazo de cheques describo que la sesiï¿½n es de reemplazo de cheques *** MDG
 	IF (post:esSesionReempChq == "S") THEN
 		FPRINT siaf:nombre_transac "%s - REEMPLAZO DE CHEQUES", siaf:nombre_transac
 	END IF
 	
-	;Si es Pago o rendición Maisvo de operativos describo que la sesión es de este tipo *** MDG
+	;Si es Pago o rendiciï¿½n Maisvo de operativos describo que la sesiï¿½n es de este tipo *** MDG
 	IF (post:esSesionRenPagoMasOp == "S") THEN
 		FPRINT siaf:nombre_transac "%s - PAGO O REND. MASIVO DE OP.", siaf:nombre_transac
 	END IF
@@ -174,9 +176,9 @@ SUB post:PRESidentifica_cli
 	CALL post:CDSdelete_AuxIva  // [PAW] ---> hay que borrar el IVA
 	CALL post:CDSdelete_AuxImpp // [MLD] ---> hay que borrar Impuestos Prov
 	 
-	CALL post:CDSTotalTransac_del // Hernán - Borro la tabla TotalTransac 11/2000
-	CALL post:CDSborro_PresuPag  // Hernán - Borro la PresuPag 28/11/2000
-	CALL post:CDSdelete_TotMedPag // Hernán - Borro la TotMedPago 28/11/2000
+	CALL post:CDSTotalTransac_del // Hernï¿½n - Borro la tabla TotalTransac 11/2000
+	CALL post:CDSborro_PresuPag  // Hernï¿½n - Borro la PresuPag 28/11/2000
+	CALL post:CDSdelete_TotMedPag // Hernï¿½n - Borro la TotMedPago 28/11/2000
 	PresNro_ttran = 0
 	/* MFM - 24.01.2002*/
 

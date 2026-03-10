@@ -33,6 +33,7 @@ SUB post:PRT_MedioPago(LIMP, Importe_Acumulado, Relleno, Largo, Tipo_Impresion)
 	DO
 		CALL post:MISCbusca_TotMedPag
 		esTarjeta = (NroTransac.NUMCHARS != 0) // tarjeta - itemizada y con numero de autorizacion.
+		
 		IF ( lib:err_retval != 0 ) THEN
 			BREAK
 		END IF
@@ -48,6 +49,8 @@ SUB post:PRT_MedioPago(LIMP, Importe_Acumulado, Relleno, Largo, Tipo_Impresion)
 			IF (esTarjeta) THEN
 				identi = post:NroCompPago2
 				FPRINT common:csr_string_171 "%s" identi
+				//SE DEBE MOSTRAR LA DESCIRPCION DE TABLA Tarjeta_POS (se chequeò que esTarjeta solo se instancia para moneda 06)
+				post:DescripMedPag = post:codint_tarj_desc //esta guardado en tabla TotMedioPago
 			ELSE
 				emisor = cod_banco
 				identi = nro_cheque

@@ -1,0 +1,71 @@
+/****o* Pendientes de agrupación/OFB:op:MISCmpBloqueoAT
+* NOMBRE
+*   OFB:op:MISCmpBloqueoAT
+* DESCRIPCION
+*   Actua cuando se trata de generar alguna accion de venta, mientras haya una orden "at_terminal" que bloquea el Point
+* ENTRADAS
+* SALIDAS
+* SOURCE
+*/
+
+#include "src\OP\misc\opmisc.h"
+
+SUB op:MISCmpBloqueoAT
+	LOCAL l_retval LIKE lib:err_retval
+	LOCAL l_idx LIKE siaf:i
+	LOCAL l_inf LIKE siaf:i
+
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] Orden con status [at_terminal] en el Point\n"
+	#endif
+
+	// Se envia la consulta para saber el status de la orden detectada
+	CALL post:MISCmpGetOrderPoint
+
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] La respuesta del servicio fue %s\n" post:mp_response_PS
+	#endif
+
+	// Se descarta cualquier status distinto de 409, ya que no es un error
+	IF (post:mp_response_PS != 409) THEN
+		// Se borra el ID de la orden, porque todos los demas estados ya tienen contemplacion y recuperacion
+		CLEARFIELD post:mp_order_id_PS
+
+		// Se borra el flag para indicar que ya no esta mas el bloqueo de "at_terminal"
+		post:mp_hay_orden_at_term = 0
+
+		// Se retorna la condicion de fin de bloqueo
+		RETURN 0
+	END IF
+
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] El Point devolvio un 409. Hay que validar que diga [at_terminal] en el mensaje\n"
+	#endif
+
+	// Se borra el flag usado para detectar la subcadena
+	LET l_inf = 0
+
+	// Se busca la subcadena "at_terminal" dentro del mensaje de respuesta del servicio
+	CALL csr:str_search(post:mp_response_message,"at_terminal",l_idx,l_inf)
+	// Se valida la existencia, para mostrarle un cartel informativo al operador
+	IF (RETVAL == 0) THEN
+
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] Se detecto el status [at_terminal] en el mensaje. \n"
+		#endif
+
+		// Se muestra el cartel para que el operador entienda que debe cancenlar la orden desde el Point para operar
+		MSGBOX "Se detecto una venta incompleta. Debera cancelarla desde el Point para continuar",OFB_OK,"AVISO"
+
+		// Se devuelve un indicador de deteccion de la condicion particular
+		RETURN 1
+	END IF
+
+	// Se borra el flag para indicar que ya no esta mas el bloque de "at_terminal"
+	post:mp_hay_orden_at_term = 0
+
+	// Se retorna la condicion de fin de bloqueo
+	RETURN 0
+END SUB
+
+/******/
