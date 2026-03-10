@@ -719,7 +719,16 @@ SUB op:TRANlogin
 
 	// Se verifica si el flag indica que quedo una orden "at_terminal" sin completar
 	IF ( post:mp_hay_orden_at_term != 0 ) THEN
+
+		// Se llama a la funcion que realiza la consulta, detecta la condicion de bloqueo y actualiza el estado del mismo
 		CALL op:MISCmpBloqueoAT
+
+		// Si devuelve que sigue existiendo el bloqueo, se debe mostrar un cartel indicativo al operador
+		LET l_ret_incot = RETVAL
+		IF (l_ret_incot == -1) THEN
+			// Se muestra el cartel para que el operador entienda que debe cancenlar la orden desde el Point para operar
+			MSGBOX "Se detecto una venta incompleta en el Point. Debera cancelarla desde el Point para continuar",OFB_OK,"AVISO"
+		END IF
 	ENDIF
 
 		//gpb:PS- 10951

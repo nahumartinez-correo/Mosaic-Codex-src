@@ -54,9 +54,6 @@ SUB op:MISCmpBloqueoAT
 		DPRINT "[DBG] Se detecto el status [at_terminal] en el mensaje. \n"
 		#endif
 
-		// Se muestra el cartel para que el operador entienda que debe cancenlar la orden desde el Point para operar
-		MSGBOX "Se detecto una venta incompleta. Debera cancelarla desde el Point para continuar",OFB_OK,"AVISO"
-
 		// Se devuelve un indicador de deteccion de la condicion particular
 		RETURN 1
 	END IF
