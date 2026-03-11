@@ -9,7 +9,7 @@
 *   RETVAL: 0 -> sin bloqueo
 * SOURCE
 */
-#include "postmisc.h"
+#include "src\POST\misc\postmisc.h"
 
 SUB post:MISCvalBloqATerm
 

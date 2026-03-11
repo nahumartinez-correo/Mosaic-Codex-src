@@ -538,7 +538,7 @@ SUB op:TRANlogin
 	; modificaba una tx *** MDG
 	CALL post:MISCreparoAuxIva
 
-	// Se valida si quedó alguna venta inconclusa con status "at_terminal", para inhabilitar la generacion de nuevas ordenes
+	// Se valida si quedo alguna venta inconclusa con status "at_terminal", para inhabilitar la generacion de nuevas ordenes
 	CALL op:MISCmpVtaIncAT
 	
 	// Se verifica si existe una orden en funcion del valor devuelto por la funcion
@@ -718,27 +718,16 @@ SUB op:TRANlogin
 	END IF
 
 	// Se verifica si el flag indica que quedo una orden "at_terminal" sin completar
-	IF ( post:mp_hay_orden_at_term != 0 ) THEN
+	CALL post:MISCvalBloqATerm
 
-		// Se llama a la funcion que realiza la consulta, detecta la condicion de bloqueo y actualiza el estado del mismo
-		CALL op:MISCmpBloqueoAT
-
-		// Si devuelve que sigue existiendo el bloqueo, se debe mostrar un cartel indicativo al operador
-		LET l_ret_incot = RETVAL
-		IF (l_ret_incot == -1) THEN
-			// Se muestra el cartel para que el operador entienda que debe cancenlar la orden desde el Point para operar
-			MSGBOX "Se detecto una venta incompleta en el Point. Debera cancelarla desde el Point para continuar",OFB_OK,"AVISO"
+	// Se verifica si se detecto el bloqueo de orden "at_terminal", porque no se puede atender la caida cancelando la venta
+	LET l_ret_incot = RETVAL
+	IF (l_ret_incot == 0) THEN
+		IF (common:adt_mp_termi_integ == "S") THEN
+			CALL post:MISCmpVerifCaidas
 		END IF
-	ENDIF
+	END IF
 
-		//gpb:PS- 10951
-		//Se comenta tratamiento 99601 - Anulacion Automatica de Venta con Tarjeta para Mercado Pago	
-	;;	//gbp:NI50546 Mercado Pago
-	;;  //Realiza la verificacion por caida de RT en las operaciones MP (Tx-99600/Tx-99601/Tx99605)
-//	  IF (common:adt_mp_termi_integ == "S") THEN
-//	  	CALL post:MISCmpVerifCaidas
-//	  END IF
-	
 	//Verifico si qued� incloncluso un cierre de Lote por Caida del RT y de ser asi termino la journalizacion
 	IF (post:codigo_tx == 9030 || post:codigo_tx == 9035)
 		//9030 Cabecera Cierre Lote

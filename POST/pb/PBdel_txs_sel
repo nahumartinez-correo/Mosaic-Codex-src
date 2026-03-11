@@ -1,26 +1,21 @@
-/****o* SesiÃ³n Correo/OFB:post:PBdel_txs_sel
+/****o* Sesión Correo/OFB:post:PBdel_txs_sel
 * NOMBRE
 *   OFB:post:PBdel_txs_sel
 * DESCRIPCION
-*   Borra una transacciÃ³n de la Grilla del Presupuesto
+*   Borra una transacción de la Grilla del Presupuesto
 * ENTRADAS
-	CALL post:MISCvalBloqATerm
-	IF (RETVAL == 1) THEN
-		RETURN (-2)
-	END IF
-
-*   ParÃ¡metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deberÃ¡n ser analizados al modificar el objeto actual
+*   Otros objetos que deberán ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   SCR:post:SCRNestado_sesion
 * DOCUMENTACION
 *   https://jirats.siemens.com.ar/jira/browse/AUT-1440
 * SOURCE
 */
-#include "postpb.h"
+#include "src\POST\pb\postpb.h"
 
 SUB post:PBdel_txs_sel
 	//LOCAL IMPORTE_TRANSAC LIKE siaf:importe
@@ -40,6 +35,11 @@ SUB post:PBdel_txs_sel
 	CALL post:MISClogMenues("post:PBdel_txs_sel")
 	;END IF
 #endif
+
+	CALL post:MISCvalBloqATerm
+	IF (RETVAL == 1) THEN
+		RETURN (-2)
+	END IF
 
 	//Controlo si existe alguna tx seleccionada para borrar
 	CALL CDScheck_tx_del
@@ -99,7 +99,7 @@ SUB post:PBdel_txs_sel
 			CALL csr:myPickcontrol("Tx_ses_selected",common:csr_string,idx)
 			IF (RETVAL < 0) THEN
 				//RETURN (-2)
-				//No hay mÃ¡s tx seleccionadas para borrar?????
+				//No hay más tx seleccionadas para borrar?????
 				BREAK
 			END IF
 

@@ -7,7 +7,7 @@
 * SALIDAS
 * SOURCE
 */
-#include "postpb.h"
+#include "src\POST\pb\postpb.h"
 
 SUB post:PBpresu_acc_ses
 

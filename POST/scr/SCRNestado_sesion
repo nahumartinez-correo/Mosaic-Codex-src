@@ -1,18 +1,18 @@
-/****s* Pendientes de agrupaci√≥n/SCR:post:SCRNestado_sesion
+/****s* Pendientes de agrupaciÛn/SCR:post:SCRNestado_sesion
 * NOMBRE
 *   SCR:post:SCRNestado_sesion
 * DESCRIPCION
 *   Comportamiento del objeto (obligatorio)
 * ENTRADAS
-*   Par√°metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par·metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber√°n ser analizados al modificar el objeto actual
+*   Otros objetos que deber·n ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   Objetos que llaman al objeto documentado (obligatorio)
 * DOCUMENTACION
-*   Documentaci√≥n relevante que deber√° ser actualizada por la modificaci√≥n de la rutina
+*   DocumentaciÛn relevante que deber· ser actualizada por la modificaciÛn de la rutina
 * SOURCE
 */
 #include "postscr.h"

@@ -1,35 +1,35 @@
-	CALL post:MISCvalBloqATerm
-	IF (RETVAL == 1) THEN
-		RETURN 0
-	END IF
-
-/****o* Sesi贸n Correo/OFB:post:PBcancela_sesion
+/****o* Sesi髇 Correo/OFB:post:PBcancela_sesion
 * NOMBRE
 *   OFB:post:PBcancela_sesion
 * DESCRIPCION
-* Rutina que se ejecuta al presionar el bot贸n de Cancelar Presupuesto de la grilla al estar dentro de sesi贸n.
+* Rutina que se ejecuta al presionar el bot髇 de Cancelar Presupuesto de la grilla al estar dentro de sesi髇.
 * Verifica que no sea una sesion de giros masivos y que no existan transacciones confirmadas.
 * Luego borra y/o actualiza datos de las siguientes tablas: track_trace,AuxIva,Presu,AdelCM,TransfBanc
 * ENTRADAS
-*   Par谩metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+*   Par醡etros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
 * SALIDAS
 *   Campos modificados como resultado o returns cuyos valores sean no triviales
 * IMPACTOS
-*   Otros objetos que deber谩n ser analizados al modificar el objeto actual
+*   Otros objetos que deber醤 ser analizados al modificar el objeto actual
 * REFERENCIADO POR
 *   OFB:post:PRECestado_presu,SCR:post:SCRNestado_presu,SCR:post:SCRNestado_sesion
 * DOCUMENTACION
 *   https://jirats.siemens.com.ar/jira/browse/AUT-1440
 * SOURCE
 */
-#include "postpb.h"
+#include "src\POST\pb\postpb.h"
 
 SUB post:PBcancela_sesion
 	LOCAL l_msje LIKE common:csr_string
 
+	CALL post:MISCvalBloqATerm
+	IF (RETVAL == 1) THEN
+		RETURN 0
+	END IF
+
 	CALL siaf:CDSverifOpenJNLctx
 	IF (CDSRETVAL == -932) THEN
-		MSGBOX "El contexto de journal se encuentra cerrado. Vuelva al inicio de la aplicaci贸n\n saliendo de todos los menues e intentelo de nuevo.", 0x00000030, "ERROR"
+		MSGBOX "El contexto de journal se encuentra cerrado. Vuelva al inicio de la aplicaci髇\n saliendo de todos los menues e intentelo de nuevo.", 0x00000030, "ERROR"
 		RETURN 0
 	END IF    
 	
