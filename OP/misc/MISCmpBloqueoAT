@@ -26,6 +26,9 @@ SUB op:MISCmpBloqueoAT
 
 	// Se descarta cualquier status distinto de 200, ya que no es un error
 	IF (post:mp_response_PS != 200) THEN
+		// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
+		CALL post:MISCmpTipoCaidaAT
+
 		// Se borra el ID de la orden, porque todos los demas estados ya tienen contemplacion y recuperacion
 		CLEARFIELD post:mp_order_id_PS
 
@@ -60,6 +63,7 @@ SUB op:MISCmpBloqueoAT
 	END IF
 
 	// Se borra el flag para indicar que ya no esta mas el bloque de "at_terminal"
+	CALL post:MISCmpTipoCaidaAT
 	post:mp_hay_orden_at_term = 0
 
 	// Se borra el registro de bloqueo en la tabla de PresuAct
