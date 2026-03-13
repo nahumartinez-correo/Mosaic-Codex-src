@@ -26,6 +26,10 @@ SUB op:MISCmpBloqueoAT
 
 	// Se descarta cualquier status distinto de 200, ya que no es un error
 	IF (post:mp_response_PS != 200) THEN
+
+		// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
+		CALL post:MISCmpTipoCaidaAT
+
 		// Se borra el ID de la orden, porque todos los demas estados ya tienen contemplacion y recuperacion
 		CLEARFIELD post:mp_order_id_PS
 
@@ -36,38 +40,51 @@ SUB op:MISCmpBloqueoAT
 		post:mp_recov_order_id = ""
 		CALL post:CDSRecov_Order_Id_PS
 
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] Se recupero la contingencia\n"
+		#endif
+
 		// Se retorna la condicion de fin de bloqueo
 		RETURN 0
 	END IF
 
 	#if CORREO_DEBUG == CORREO_ON
-	DPRINT "[DBG] El Point devolvio un 200. Hay que validar que diga [at_terminal] en el mensaje\n"
+	DPRINT "[DBG] El Point devolvio un 200 con status [%s] en el mensaje\n" post:mp_status_pago_PS
 	#endif
 
 	// Se valida la existencia, para mostrarle un cartel informativo al operador
 	IF ( post:mp_status_pago_PS == "at_terminal" ) THEN
 
-		#if CORREO_DEBUG == CORREO_ON
-		DPRINT "[DBG] Se detecto el status [at_terminal] en el mensaje.\n"
-		#endif
-
 		// Se resguarda nuevamente en la tabla de PresuAct, por si se vuelve a caer antes de completarse
 		post:mp_recov_order_id = post:mp_order_id_PS
 		CALL post:CDSRecov_Order_Id_PS
 
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] Se persiste el status en la PresuAct\n"
+		#endif
+
 		// Se devuelve un indicador de deteccion de la condicion particular
 		RETURN 1
+
 	END IF
 
-	// Se borra el flag para indicar que ya no esta mas el bloque de "at_terminal"
+	// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
+	CALL post:MISCmpTipoCaidaAT
+
+	// Se borra el flag para indicar que ya no esta mas el bloqueo de "at_terminal"
 	post:mp_hay_orden_at_term = 0
 
 	// Se borra el registro de bloqueo en la tabla de PresuAct
 	post:mp_recov_order_id = ""
 	CALL post:CDSRecov_Order_Id_PS
 
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] Se recupero la contingencia\n"
+	#endif
+
 	// Se retorna la condicion de fin de bloqueo
 	RETURN 0
+
 END SUB
 
 /******/
