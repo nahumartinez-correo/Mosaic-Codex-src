@@ -64,11 +64,19 @@ SUB op:MISCmpBloqueoAT
 		LET l_opmp_dis_bck = post:adt_opmp_dis_bck_btn
 		LET l_opmp_pay_id = post:adt_opmp_payment_id
 		LET l_opmp_pay_id_PS = post:adt_opmp_pay_id_PS
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] BloqAT ctx inicial orderPS[%s] codseq[%s] pres[%s]\n" post:mp_order_id_PS, post:adt_opmp_codseq_nro, post:adt_opmp_PresNro
+		DPRINT "[DBG] BloqAT ctx inicial pay[%s] payPS[%s] stPS[%s]\n" l_opmp_pay_id, l_opmp_pay_id_PS, post:adt_opmp_status_p_PS
+		#endif
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
 	// Se envia la consulta para saber el status de la orden detectada
 	CALL post:MISCmpGetOrderPoint
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] BloqAT postGET rsp[%s] stPS[%s] ordPS[%s]\n" post:mp_response_PS, post:mp_status_pago_PS, post:mp_order_id_PS
+	DPRINT "[DBG] BloqAT postGET pay[%s] payPS[%s] codseq[%s]\n" post:mp_payment_id, post:mp_payment_id_PS, post:adt_mp_codseq_nro
+	#endif
 
 	// Se reponen solo los datos faltantes por el save del GET
 	IF (l_hay_ctx == 0) THEN
@@ -106,6 +114,10 @@ SUB op:MISCmpBloqueoAT
 			IF (post:adt_opmp_pay_id_PS.NUMCHARS == 0 && l_opmp_pay_id_PS.NUMCHARS > 0) THEN
 				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_pay_id_PS AS post:adt_opmp_pay_id_PS
 			END IF
+			#if CORREO_DEBUG == CORREO_ON
+			DPRINT "[DBG] BloqAT repone adtPay[%s] adtPayPS[%s]\n" post:adt_opmp_payment_id, post:adt_opmp_pay_id_PS
+			DPRINT "[DBG] BloqAT repone codseq[%s] pres[%s] stPS[%s]\n" post:adt_opmp_codseq_nro, post:adt_opmp_PresNro, post:adt_opmp_status_p_PS
+			#endif
 
 			CDS UPDATE DSC:post:OperacionesMP_ctx LOCK
 		END IF
@@ -123,6 +135,10 @@ SUB op:MISCmpBloqueoAT
 			END IF
 		END IF
 	END IF
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] BloqAT mem 99601 pay[%s] payPS[%s] adtPay[%s]\n" post:mp_payment_id, post:mp_payment_id_PS, post:adt_opmp_payment_id
+	DPRINT "[DBG] BloqAT mem 99601 adtPayPS[%s] ordPS[%s]\n" post:adt_opmp_pay_id_PS, post:mp_order_id_PS
+	#endif
 
 	#if CORREO_DEBUG == CORREO_ON
 	DPRINT "[DBG] La respuesta del servicio fue %s\n" post:mp_response_PS
@@ -130,6 +146,9 @@ SUB op:MISCmpBloqueoAT
 
 	// Se descarta cualquier status distinto de 200, ya que no es un error
 	IF (post:mp_response_PS != 200) THEN
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] BloqAT camino rsp!=200 -> TipoCaidaAT\n"
+		#endif
 
 		// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
 		CALL post:MISCmpTipoCaidaAT
@@ -158,6 +177,9 @@ SUB op:MISCmpBloqueoAT
 
 	// Se valida la existencia, para mostrarle un cartel informativo al operador
 	IF ( post:mp_status_pago_PS == "at_terminal" ) THEN
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] BloqAT sigue bloqueado stPS[%s]\n" post:mp_status_pago_PS
+		#endif
 
 		// Se resguarda nuevamente en la tabla de PresuAct, por si se vuelve a caer antes de completarse
 		post:mp_recov_order_id = post:mp_order_id_PS
@@ -171,6 +193,10 @@ SUB op:MISCmpBloqueoAT
 		RETURN 1
 
 	END IF
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] BloqAT libera bloqueo stPS[%s] -> TipoCaidaAT\n" post:mp_status_pago_PS
+	DPRINT "[DBG] BloqAT derivacion pay[%s] payPS[%s] codseq[%s]\n" post:mp_payment_id, post:mp_payment_id_PS, post:adt_mp_codseq_nro
+	#endif
 
 	// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
 	CALL post:MISCmpTipoCaidaAT

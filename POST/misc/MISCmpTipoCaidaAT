@@ -51,6 +51,9 @@ SUB post:MISCmpTipoCaidaAT
 	// Se busca la primer operacion que coincida con el ID
 	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
 	LET l_retval = CDSRETVAL
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] TipoCaidaAT busca VEN orderPS[%s] retval[%s]\n" post:mp_order_id_PS, l_retval
+	#endif
 	IF (l_retval != 0) THEN
 		CDS ENDSELECT DSC:post:OperacionesMP_ctx
 		RETURN -2
@@ -77,6 +80,11 @@ SUB post:MISCmpTipoCaidaAT
 	LET l_opmp_order_id_PS = post:adt_opmp_order_id_PS
 	LET l_opmp_auth = post:adt_opmp_auth_code
 	LET l_opmp_cmd = post:adt_opmp_comandos
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] TipoCaidaAT ctx VEN pres[%s] codseq[%s] stPS[%s]\n" post:adt_opmp_PresNro, post:adt_opmp_codseq_nro, post:adt_opmp_status_p_PS
+	DPRINT "[DBG] TipoCaidaAT ctx VEN pay[%s] payPS[%s] ordPS[%s]\n" post:adt_opmp_payment_id, post:adt_opmp_pay_id_PS, post:adt_opmp_order_id_PS
+	DPRINT "[DBG] TipoCaidaAT ctx VEN auth[%s] cmd[%s]\n" post:adt_opmp_auth_code, post:adt_opmp_comandos
+	#endif
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
 	// Se define el codigo de una anulacion de venta con presupuesto
@@ -108,6 +116,14 @@ SUB post:MISCmpTipoCaidaAT
 	IF (post:mp_comandos.NUMCHARS == 0 && l_opmp_cmd.NUMCHARS > 0) THEN
 		LET post:mp_comandos = l_opmp_cmd
 	END IF
+	IF (post:mp_payment_id == 0 && post:adt_opmp_pay_id_PS.NUMCHARS > 0) THEN
+		LET post:mp_payment_id = post:adt_opmp_pay_id_PS
+	END IF
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] TipoCaidaAT mem pre-popup pay[%s] payPS[%s] ord[%s]\n" post:mp_payment_id, post:mp_payment_id_PS, post:mp_order_id
+	DPRINT "[DBG] TipoCaidaAT mem pre-popup ordPS[%s] auth[%s] amt[%s]\n" post:mp_order_id_PS, post:mp_auth_code, post:mp_amount
+	DPRINT "[DBG] TipoCaidaAT mem pre-popup pres[%s] codseqMP[%s] cmd[%s]\n" post:PresNro, post:adt_mp_codseq_nro, post:mp_comandos
+	#endif
 
 	// Se resguardan las listas de la operacion
 	CALL csr:proc_list(F_COPY,LST:post:LISTget_opmp_order,LST:post:LISTset_opmp_order)
@@ -115,12 +131,19 @@ SUB post:MISCmpTipoCaidaAT
 
 	// Si el pago NO fue procesado, se cierra como fallo
 	IF (post:mp_status_pago_PS != "processed") THEN
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] TipoCaidaAT no processed stPS[%s] -> jnlFallo VEN\n" post:mp_status_pago_PS
+		#endif
 		CALL post:CDSopmp_jnlFallo("VEN")
 		RETURN -2
 	END IF
 
 	// Si el pago fue procesado, se realiza anulacion automatica (refund)
 	CALL drv:MISCpopup( SCR:post:SCRN99600, OFB:post:PRES99601, OFB:PREC99601_mpago, OFB:post:SVAL99600_mpago, LST:post:BUT99600 )
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] TipoCaidaAT post-popup key[%s] nroComp[%s] lote[%s]\n" LASTKEY, post:NroCompPago2, post:Nro_Lote_Pos
+	DPRINT "[DBG] TipoCaidaAT post-popup auth[%s] refPS[%s] refStPS[%s]\n" post:NroTransac, post:mp_refund_id_PS, post:mp_refund_status_PS
+	#endif
 	IF (LASTKEY == RT_ESC) THEN
 		RETURN -2
 	END IF
@@ -178,6 +201,11 @@ SUB post:MISCmpTipoCaidaAT
 	LET post:adt_mp_codseq_nro = l_mp_codseq_nro
 	LET post:adt_opmp_codint_mp = l_mp_codint_mp
 	LET post:adt_vpi_codseq_nro = l_adt_vpi_codseq_nro
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] TipoCaidaAT preJNL presCanc[%s] imp[%s] cmd[%s]\n" giros:PresNro_canc, siaf:importe, post:mp_comandos
+	DPRINT "[DBG] TipoCaidaAT preJNL codseqMP[%s] codseqVPI[%s] pres[%s]\n" post:adt_mp_codseq_nro, post:adt_vpi_codseq_nro, post:PresNro
+	DPRINT "[DBG] TipoCaidaAT preJNL login[%s] term[%s] op[%s]\n" op:op_login_id, common:window_node, post:mp_operacion
+	#endif
 
 	tlr:INDdcol_scrn[0] = SCR:post:SCRN99600
 	tlr:INDtran_name = LST:post:TRAN99601
@@ -190,6 +218,9 @@ SUB post:MISCmpTipoCaidaAT
 
 	UNGETKEY RT_SEND
 	CALL tlr:JNLtran
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] Se recupero la contingencia\n"
+	#endif
 	UNGETKEY RT_SEND
 
 	RESETFLAG drv:mode_flags,no_stack_list
