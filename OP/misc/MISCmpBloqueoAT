@@ -20,6 +20,8 @@ SUB op:MISCmpBloqueoAT
 	LOCAL l_opmp_ext_ref LIKE post:adt_opmp_ext_ref
 	LOCAL l_opmp_cc_type LIKE post:adt_opmp_cc_type
 	LOCAL l_opmp_dis_bck LIKE post:adt_opmp_dis_bck_btn
+	LOCAL l_opmp_pay_id LIKE post:adt_opmp_payment_id
+	LOCAL l_opmp_pay_id_PS LIKE post:adt_opmp_pay_id_PS
 
 	#if CORREO_DEBUG == CORREO_ON
 	DPRINT "[DBG] Orden con status [at_terminal] en el Point\n"
@@ -33,6 +35,8 @@ SUB op:MISCmpBloqueoAT
 	CLEARFIELD l_opmp_ext_ref
 	CLEARFIELD l_opmp_cc_type
 	CLEARFIELD l_opmp_dis_bck
+	CLEARFIELD l_opmp_pay_id
+	CLEARFIELD l_opmp_pay_id_PS
 
 	// Se resguardan los datos de la operacion VEN actual antes del GET
 	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
@@ -48,7 +52,9 @@ SUB op:MISCmpBloqueoAT
 			post:adt_opmp_device_name \
 			post:adt_opmp_ext_ref \
 			post:adt_opmp_cc_type \
-			post:adt_opmp_dis_bck_btn
+			post:adt_opmp_dis_bck_btn \
+			post:adt_opmp_payment_id \
+			post:adt_opmp_pay_id_PS
 		LET l_opmp_cod_siaf = post:adt_opmp_cod_siaf
 		LET l_opmp_desc = post:adt_opmp_description
 		LET l_opmp_amount = post:adt_opmp_amount
@@ -56,6 +62,8 @@ SUB op:MISCmpBloqueoAT
 		LET l_opmp_ext_ref = post:adt_opmp_ext_ref
 		LET l_opmp_cc_type = post:adt_opmp_cc_type
 		LET l_opmp_dis_bck = post:adt_opmp_dis_bck_btn
+		LET l_opmp_pay_id = post:adt_opmp_payment_id
+		LET l_opmp_pay_id_PS = post:adt_opmp_pay_id_PS
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
@@ -92,11 +100,28 @@ SUB op:MISCmpBloqueoAT
 			IF (post:adt_opmp_dis_bck_btn.NUMCHARS == 0 && l_opmp_dis_bck.NUMCHARS > 0) THEN
 				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_dis_bck AS post:adt_opmp_dis_bck_btn
 			END IF
+			IF (post:adt_opmp_payment_id == 0 && l_opmp_pay_id != 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_pay_id AS post:adt_opmp_payment_id
+			END IF
+			IF (post:adt_opmp_pay_id_PS.NUMCHARS == 0 && l_opmp_pay_id_PS.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_pay_id_PS AS post:adt_opmp_pay_id_PS
+			END IF
 
 			CDS UPDATE DSC:post:OperacionesMP_ctx LOCK
 		END IF
 		CDS UNLOCK DSC:post:OperacionesMP_ctx
 		CDS ENDSELECT DSC:post:OperacionesMP_ctx
+	END IF
+
+	// Se garantiza el id de pago en memoria para visualizar el numero de operacion en 99601
+	IF (post:mp_payment_id == 0) THEN
+		IF (post:adt_opmp_payment_id != 0) THEN
+			LET post:mp_payment_id = post:adt_opmp_payment_id
+		ELSE
+			IF (post:adt_opmp_pay_id_PS.NUMCHARS > 0) THEN
+				LET post:mp_payment_id = post:adt_opmp_pay_id_PS
+			END IF
+		END IF
 	END IF
 
 	#if CORREO_DEBUG == CORREO_ON
