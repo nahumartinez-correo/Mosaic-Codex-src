@@ -214,6 +214,12 @@ SUB post:MISCmpTipoCaidaAT
 	CALL post:MISCmuevo_campos_jou
 	CALL siaf:MISClleno_modalidad
 
+	// Fuerzo marcas finales de journalizacion para el caso exitoso del refund
+	LET post:PresNro = giros:PresNro_canc
+	LET post:adt_vpi_codseq_nro = post:adt_mp_codseq_nro
+	CALL post:CDSopmp_jnlFallo("VEN")
+	CALL post:CDSopmp_jnlOK("REFUND")
+
 	CLEARFIELD post:PresNro
 
 	UNGETKEY RT_SEND
