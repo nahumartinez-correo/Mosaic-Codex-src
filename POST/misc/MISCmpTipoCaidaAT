@@ -138,15 +138,26 @@ SUB post:MISCmpTipoCaidaAT
 		RETURN -2
 	END IF
 
-	// Si el pago fue procesado, se realiza anulacion automatica (refund)
-	CALL drv:MISCpopup( SCR:post:SCRN99600, OFB:post:PRES99601, OFB:PREC99601_mpago, OFB:post:SVAL99600_mpago, LST:post:BUT99600 )
+	// Si el pago fue procesado, se ejecuta refund automatico sin popup 99601
 	#if CORREO_DEBUG == CORREO_ON
-	DPRINT "[DBG] TipoCaidaAT post-popup key[%s] nroComp[%s] lote[%s]\n" LASTKEY, post:NroCompPago2, post:Nro_Lote_Pos
-	DPRINT "[DBG] TipoCaidaAT post-popup auth[%s] refPS[%s] refStPS[%s]\n" post:NroTransac, post:mp_refund_id_PS, post:mp_refund_status_PS
+	DPRINT "[DBG] TipoCaidaAT omite popup 99601 y ejecuta refund directo\n"
+	DPRINT "[DBG] TipoCaidaAT pre-refund pay[%s] ordPS[%s] auth[%s]\n" post:mp_payment_id, post:mp_order_id_PS, post:mp_auth_code
+	DPRINT "[DBG] TipoCaidaAT pre-refund pres[%s] codseq[%s] amt[%s]\n" post:PresNro, post:adt_mp_codseq_nro, post:mp_amount
 	#endif
-	IF (LASTKEY == RT_ESC) THEN
+
+	CALL post:PREC99601_mpago
+	CALL post:SVAL99600_mpago
+	IF (RETVAL < 0) THEN
+		#if CORREO_DEBUG == CORREO_ON
+		DPRINT "[DBG] TipoCaidaAT refund automatico fallo retval[%s]\n" RETVAL
+		#endif
 		RETURN -2
 	END IF
+
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] TipoCaidaAT post-refund refPS[%s] refStPS[%s]\n" post:mp_refund_id_PS, post:mp_refund_status_PS
+	DPRINT "[DBG] TipoCaidaAT post-refund nroComp[%s] lote[%s]\n" post:NroCompPago2, post:Nro_Lote_Pos
+	#endif
 
 	// Se resguardan los valores
 	LET l_Total_importe = post:Total_importe
@@ -170,6 +181,9 @@ SUB post:MISCmpTipoCaidaAT
 	LET l_adt_vpi_codseq_nro = post:adt_vpi_codseq_nro
 
 	// Se journaliza
+	#if CORREO_DEBUG == CORREO_ON
+	DPRINT "[DBG] TipoCaidaAT entra a journalizacion luego de refund auto\n"
+	#endif
 	CALL tlr:JNLinitialize
 	LET siaf:codigo_siaf = 99601
 
