@@ -12,13 +12,92 @@
 
 SUB op:MISCmpBloqueoAT
 	LOCAL l_retval LIKE lib:err_retval
+	LOCAL l_hay_ctx LIKE lib:err_retval
+	LOCAL l_opmp_cod_siaf LIKE post:adt_opmp_cod_siaf
+	LOCAL l_opmp_desc LIKE post:adt_opmp_description
+	LOCAL l_opmp_amount LIKE post:adt_opmp_amount
+	LOCAL l_opmp_device LIKE post:adt_opmp_device_name
+	LOCAL l_opmp_ext_ref LIKE post:adt_opmp_ext_ref
+	LOCAL l_opmp_cc_type LIKE post:adt_opmp_cc_type
+	LOCAL l_opmp_dis_bck LIKE post:adt_opmp_dis_bck_btn
 
 	#if CORREO_DEBUG == CORREO_ON
 	DPRINT "[DBG] Orden con status [at_terminal] en el Point\n"
 	#endif
 
+	LET l_hay_ctx = -2
+	CLEARFIELD l_opmp_cod_siaf
+	CLEARFIELD l_opmp_desc
+	CLEARFIELD l_opmp_amount
+	CLEARFIELD l_opmp_device
+	CLEARFIELD l_opmp_ext_ref
+	CLEARFIELD l_opmp_cc_type
+	CLEARFIELD l_opmp_dis_bck
+
+	// Resguardo datos ricos de la operacion VEN actual antes del GET
+	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+		WHERE post:adt_opmp_order_id_PS == post:mp_order_id_PS \
+		&& post:adt_opmp_operacion == "VEN"
+	CDS FINDFIRST DSC:post:OperacionesMP_ctx NOLOCK
+	IF (CDSRETVAL == 0) THEN
+		LET l_hay_ctx = 0
+		CDS EXTRACT DSC:post:OperacionesMP_ctx \
+			post:adt_opmp_cod_siaf \
+			post:adt_opmp_description \
+			post:adt_opmp_amount \
+			post:adt_opmp_device_name \
+			post:adt_opmp_ext_ref \
+			post:adt_opmp_cc_type \
+			post:adt_opmp_dis_bck_btn
+		LET l_opmp_cod_siaf = post:adt_opmp_cod_siaf
+		LET l_opmp_desc = post:adt_opmp_description
+		LET l_opmp_amount = post:adt_opmp_amount
+		LET l_opmp_device = post:adt_opmp_device_name
+		LET l_opmp_ext_ref = post:adt_opmp_ext_ref
+		LET l_opmp_cc_type = post:adt_opmp_cc_type
+		LET l_opmp_dis_bck = post:adt_opmp_dis_bck_btn
+	END IF
+	CDS ENDSELECT DSC:post:OperacionesMP_ctx
+
 	// Se envia la consulta para saber el status de la orden detectada
 	CALL post:MISCmpGetOrderPoint
+
+	// Repongo solo datos ricos degradados por el save del GET, sin tocar status/PS
+	IF (l_hay_ctx == 0) THEN
+		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
+			WHERE post:adt_opmp_order_id_PS == post:mp_order_id_PS \
+			&& post:adt_opmp_operacion == "VEN"
+		CDS FINDFIRST DSC:post:OperacionesMP_ctx LOCK
+		IF (CDSRETVAL == 0) THEN
+			CDS EXTRACT DSC:post:OperacionesMP_ctx ALL
+
+			IF (post:adt_opmp_cod_siaf == 0 && l_opmp_cod_siaf != 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_cod_siaf AS post:adt_opmp_cod_siaf
+			END IF
+			IF (post:adt_opmp_description.NUMCHARS == 0 && l_opmp_desc.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_desc AS post:adt_opmp_description
+			END IF
+			IF (post:adt_opmp_amount.NUMCHARS == 0 && l_opmp_amount.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_amount AS post:adt_opmp_amount
+			END IF
+			IF (post:adt_opmp_device_name.NUMCHARS == 0 && l_opmp_device.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_device AS post:adt_opmp_device_name
+			END IF
+			IF (post:adt_opmp_ext_ref.NUMCHARS == 0 && l_opmp_ext_ref.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_ext_ref AS post:adt_opmp_ext_ref
+			END IF
+			IF (post:adt_opmp_cc_type.NUMCHARS == 0 && l_opmp_cc_type.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_cc_type AS post:adt_opmp_cc_type
+			END IF
+			IF (post:adt_opmp_dis_bck_btn.NUMCHARS == 0 && l_opmp_dis_bck.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_dis_bck AS post:adt_opmp_dis_bck_btn
+			END IF
+
+			CDS UPDATE DSC:post:OperacionesMP_ctx LOCK
+		END IF
+		CDS UNLOCK DSC:post:OperacionesMP_ctx
+		CDS ENDSELECT DSC:post:OperacionesMP_ctx
+	END IF
 
 	#if CORREO_DEBUG == CORREO_ON
 	DPRINT "[DBG] La respuesta del servicio fue %s\n" post:mp_response_PS
@@ -26,6 +105,9 @@ SUB op:MISCmpBloqueoAT
 
 	// Se descarta cualquier status distinto de 200, ya que no es un error
 	IF (post:mp_response_PS != 200) THEN
+		// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
+		CALL post:MISCmpTipoCaidaAT
+
 		// Se borra el ID de la orden, porque todos los demas estados ya tienen contemplacion y recuperacion
 		CLEARFIELD post:mp_order_id_PS
 
@@ -60,6 +142,7 @@ SUB op:MISCmpBloqueoAT
 	END IF
 
 	// Se borra el flag para indicar que ya no esta mas el bloque de "at_terminal"
+	CALL post:MISCmpTipoCaidaAT
 	post:mp_hay_orden_at_term = 0
 
 	// Se borra el registro de bloqueo en la tabla de PresuAct
