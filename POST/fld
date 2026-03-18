@@ -7113,7 +7113,7 @@ mp_payer_email ASCII 180 1 ~ SCDEAscurDmpbdha 0 0 0 0 0 0 OFB:siaf:DUREpipe     
 //Campo global para mantener consistente el codeint de mp_amount
 mp_cod_int_glob ASCII 3 1 ~ ScDEAsCUrDmpbdha 0 0 0 0 0 0 0
 //Avariable para la recuperacion de ordenes point
-mp_recov_order_id ASCII 32 ~ ~ SCDEAscurDmpbdha 0 0 0 0 0 0 0
+mp_recov_order_id ASCII 32 ~ ~ ScDEAscurDmpbdha 0 0 0 0 0 0 0
 mp_hay_orden_at_term NUMERIC 5 ~ ~ ScDEAscurDmpbdha 0 0 0 0 0 0 0					// Flag para indicar que hay una venta con status "at_terminal" en el point
 
 //Tabla Terminal_MP

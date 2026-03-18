@@ -538,10 +538,10 @@ SUB op:TRANlogin
 	; modificaba una tx *** MDG
 	CALL post:MISCreparoAuxIva
 
-	// Se valida si quedo alguna venta inconclusa con status "at_terminal", para inhabilitar la generacion de nuevas ordenes
+	// Se valida si quedó alguna venta inconclusa con status "at_terminal", para inhabilitar la generación de nuevas ordenes
 	CALL op:MISCmpVtaIncAT
 	
-	// Se verifica si existe una orden en funcion del valor devuelto por la funcion
+	// Se verifica si existe una orden en función del valor devuelto por la consulta
 	IF ( RETVAL == 0 ) THEN
 		post:mp_hay_orden_at_term = 0
 	ELSE
@@ -720,7 +720,7 @@ SUB op:TRANlogin
 	// Se verifica si el flag indica que quedo una orden "at_terminal" sin completar
 	CALL post:MISCvalBloqATerm
 
-	// Se verifica si se detecto el bloqueo de orden "at_terminal", porque no se puede atender la caida cancelando la venta
+	// Se verifica si se detectó el bloqueo de orden "at_terminal", porque no se puede atender la caida cancelando la venta
 	LET l_ret_incot = RETVAL
 	IF (l_ret_incot == 0) THEN
 		IF (common:adt_mp_termi_integ == "S") THEN

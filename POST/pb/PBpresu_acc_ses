@@ -11,11 +11,13 @@
 
 SUB post:PBpresu_acc_ses
 
+	// Se valida si existe el bloqueo por orden viva "at_terminal" en el point
 	CALL post:MISCvalBloqATerm
 	IF (RETVAL == 1) THEN
 		RETURN 0
 	END IF
 
+	// Si no existe el bloqueo, se continua por el flujo original del botón
 	CALL plataf:estado_presu_accion
 	RETURN 0
 END SUB

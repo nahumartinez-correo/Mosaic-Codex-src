@@ -20,10 +20,8 @@ SUB op:MISCmpBloqueoAT
 	LOCAL l_opmp_ext_ref LIKE post:adt_opmp_ext_ref
 	LOCAL l_opmp_cc_type LIKE post:adt_opmp_cc_type
 	LOCAL l_opmp_dis_bck LIKE post:adt_opmp_dis_bck_btn
-
-	#if CORREO_DEBUG == CORREO_ON
-	DPRINT "[DBG] Orden con status [at_terminal] en el Point\n"
-	#endif
+	LOCAL l_opmp_pay_id LIKE post:adt_opmp_payment_id
+	LOCAL l_opmp_pay_id_PS LIKE post:adt_opmp_pay_id_PS
 
 	LET l_hay_ctx = -2
 	CLEARFIELD l_opmp_cod_siaf
@@ -33,8 +31,10 @@ SUB op:MISCmpBloqueoAT
 	CLEARFIELD l_opmp_ext_ref
 	CLEARFIELD l_opmp_cc_type
 	CLEARFIELD l_opmp_dis_bck
+	CLEARFIELD l_opmp_pay_id
+	CLEARFIELD l_opmp_pay_id_PS
 
-	// Se resguardan los datos de la operacion VEN actual antes del GET
+	// Se resguardan los datos de la operación VEN actual antes del GET
 	CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
 		WHERE post:adt_opmp_order_id_PS == post:mp_order_id_PS \
 		&& post:adt_opmp_operacion == "VEN"
@@ -48,7 +48,9 @@ SUB op:MISCmpBloqueoAT
 			post:adt_opmp_device_name \
 			post:adt_opmp_ext_ref \
 			post:adt_opmp_cc_type \
-			post:adt_opmp_dis_bck_btn
+			post:adt_opmp_dis_bck_btn \
+			post:adt_opmp_payment_id \
+			post:adt_opmp_pay_id_PS
 		LET l_opmp_cod_siaf = post:adt_opmp_cod_siaf
 		LET l_opmp_desc = post:adt_opmp_description
 		LET l_opmp_amount = post:adt_opmp_amount
@@ -56,13 +58,15 @@ SUB op:MISCmpBloqueoAT
 		LET l_opmp_ext_ref = post:adt_opmp_ext_ref
 		LET l_opmp_cc_type = post:adt_opmp_cc_type
 		LET l_opmp_dis_bck = post:adt_opmp_dis_bck_btn
+		LET l_opmp_pay_id = post:adt_opmp_payment_id
+		LET l_opmp_pay_id_PS = post:adt_opmp_pay_id_PS
 	END IF
 	CDS ENDSELECT DSC:post:OperacionesMP_ctx
 
-	// Se envia la consulta para saber el status de la orden detectada
+	// Se envía la consulta para saber el status de la orden detectada
 	CALL post:MISCmpGetOrderPoint
 
-	// Se reponen solo los datos faltantes por el save del GET
+	// Se reponen sólo los datos faltantes por el save del GET
 	IF (l_hay_ctx == 0) THEN
 		CDS SELECT FROM DSC:post:OperacionesMP_tbl BECOMES DSC:post:OperacionesMP_ctx \
 			WHERE post:adt_opmp_order_id_PS == post:mp_order_id_PS \
@@ -92,6 +96,12 @@ SUB op:MISCmpBloqueoAT
 			IF (post:adt_opmp_dis_bck_btn.NUMCHARS == 0 && l_opmp_dis_bck.NUMCHARS > 0) THEN
 				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_dis_bck AS post:adt_opmp_dis_bck_btn
 			END IF
+			IF (post:adt_opmp_payment_id == 0 && l_opmp_pay_id != 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_pay_id AS post:adt_opmp_payment_id
+			END IF
+			IF (post:adt_opmp_pay_id_PS.NUMCHARS == 0 && l_opmp_pay_id_PS.NUMCHARS > 0) THEN
+				CDS APPEND DSC:post:OperacionesMP_ctx l_opmp_pay_id_PS AS post:adt_opmp_pay_id_PS
+			END IF
 
 			CDS UPDATE DSC:post:OperacionesMP_ctx LOCK
 		END IF
@@ -99,50 +109,43 @@ SUB op:MISCmpBloqueoAT
 		CDS ENDSELECT DSC:post:OperacionesMP_ctx
 	END IF
 
-	#if CORREO_DEBUG == CORREO_ON
-	DPRINT "[DBG] La respuesta del servicio fue %s\n" post:mp_response_PS
-	#endif
+	// Se garantiza el id de pago en memoria para visualizar el número de operacion en 99601
+	IF (post:mp_payment_id == 0) THEN
+		IF (post:adt_opmp_payment_id != 0) THEN
+			LET post:mp_payment_id = post:adt_opmp_payment_id
+		ELSE
+			IF (post:adt_opmp_pay_id_PS.NUMCHARS > 0) THEN
+				LET post:mp_payment_id = post:adt_opmp_pay_id_PS
+			END IF
+		END IF
+	END IF
 
 	// Se descarta cualquier status distinto de 200, ya que no es un error
 	IF (post:mp_response_PS != 200) THEN
-
 		// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
 		CALL post:MISCmpTipoCaidaAT
 
-		// Se borra el ID de la orden, porque todos los demas estados ya tienen contemplacion y recuperacion
+		// Se borra el ID de la orden, porque todos los demas estados ya tienen contemplación y recuperación
 		CLEARFIELD post:mp_order_id_PS
 
-		// Se borra el flag para indicar que ya no esta mas el bloqueo de "at_terminal"
+		// Se borra el flag para indicar que ya no esta más el bloqueo de "at_terminal"
 		post:mp_hay_orden_at_term = 0
 
 		// Se borra el registro de bloqueo en la tabla de PresuAct
 		post:mp_recov_order_id = ""
 		CALL post:CDSRecov_Order_Id_PS
 
-		#if CORREO_DEBUG == CORREO_ON
-		DPRINT "[DBG] Se recupero la contingencia\n"
-		#endif
-
-		// Se retorna la condicion de fin de bloqueo
+		// Se retorna la condición de fin de bloqueo
 		RETURN 0
 	END IF
 
-	#if CORREO_DEBUG == CORREO_ON
-	DPRINT "[DBG] El Point devolvio un 200 con status [%s] en el mensaje\n" post:mp_status_pago_PS
-	#endif
-
 	// Se valida la existencia, para mostrarle un cartel informativo al operador
 	IF ( post:mp_status_pago_PS == "at_terminal" ) THEN
-
 		// Se resguarda nuevamente en la tabla de PresuAct, por si se vuelve a caer antes de completarse
 		post:mp_recov_order_id = post:mp_order_id_PS
 		CALL post:CDSRecov_Order_Id_PS
 
-		#if CORREO_DEBUG == CORREO_ON
-		DPRINT "[DBG] Se persiste el status en la PresuAct\n"
-		#endif
-
-		// Se devuelve un indicador de deteccion de la condicion particular
+		// Se devuelve un indicador de detección de la condición particular
 		RETURN 1
 
 	END IF
@@ -150,18 +153,14 @@ SUB op:MISCmpBloqueoAT
 	// Se atiende la contingencia de la venta asociada al bloqueo antes de liberar
 	CALL post:MISCmpTipoCaidaAT
 
-	// Se borra el flag para indicar que ya no esta mas el bloqueo de "at_terminal"
+	// Se borra el flag para indicar que ya no esta más el bloqueo de "at_terminal"
 	post:mp_hay_orden_at_term = 0
 
 	// Se borra el registro de bloqueo en la tabla de PresuAct
 	post:mp_recov_order_id = ""
 	CALL post:CDSRecov_Order_Id_PS
 
-	#if CORREO_DEBUG == CORREO_ON
-	DPRINT "[DBG] Se recupero la contingencia\n"
-	#endif
-
-	// Se retorna la condicion de fin de bloqueo
+	// Se retorna la condición de fin de bloqueo
 	RETURN 0
 
 END SUB

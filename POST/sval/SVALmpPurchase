@@ -173,7 +173,7 @@ SUB post:SVALmpPurchase
                 RETURN -2
 
             CASE "action_required"
-                post:mp_msg_guia = "Atención: requiere acción manual en la terminal."
+                post:mp_msg_guia = "Atencion: requiere accion manual. Esc para salir"
                 CALL CSR:proc_list(F_REFRESH, LST:post:LISTmp_screen_status)
                 refresh window
                 RETURN -2

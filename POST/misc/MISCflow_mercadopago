@@ -15,7 +15,7 @@
 *   NI50546 Mercado Pago 
 * SOURCE
 */
-#include "src\POST\misc\postmisc.h"
+#include "postmisc.h"
 
 SUB post:MISCflow_mercadopago
 	SETFLAG drv:mode_flags,popup_mode
@@ -131,8 +131,6 @@ SUB post:MISCflow_mercadopago
     LET post:Nro_Lote_Pos = post:mp_order_id     
     LET post:NroTransac = post:mp_auth_code
     LET post:Tipo_Operacion_Pos = "ONLINE"
-	post:mp_recov_order_id = ""
-    CALL post:CDSRecov_Order_Id_PS
   END IF
 	
 	REFRESH post:NroCompPago2

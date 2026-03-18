@@ -36,6 +36,7 @@ SUB post:PBdel_txs_sel
 	;END IF
 #endif
 
+	// Se valida si existe el bloqueo por orden viva "at_terminal" en el point
 	CALL post:MISCvalBloqATerm
 	IF (RETVAL == 1) THEN
 		RETURN (-2)

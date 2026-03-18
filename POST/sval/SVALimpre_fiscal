@@ -230,6 +230,12 @@ SUB post:SVALimpre_fiscal
 					CALL post:MISCjnl_fact_sesion(tlr:jnl_branch,tlr:jnl_operator,\
 						tlr:jnl_date,tlr:jnl_time,tlr:jnl_bus_date,tlr:jnl_sequence)
 				END IF
+
+				//Confirmacion MP
+				IF (post:mp_cod_int_glob == "MPD" || post:mp_cod_int_glob == "MPC") THEN
+					CALL post:OFBclimed_factura_MP
+					post:mp_recov_order_id = ""
+				END IF
 					
 				//50295
 				IF (post:cli_tipo == CLIMED && post:tipo_giro_presu == "EG") THEN

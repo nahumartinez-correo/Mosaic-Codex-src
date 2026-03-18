@@ -22,12 +22,10 @@ SUB post:CDSRecov_Order_Id_PS
     CDS SELECT FROM DSC:TABPresuActi BECOMES DSC:CONPresuActi WHERE  \
                         post:op_operator_id == fld:post:op_operator_id
     CDS FINDFIRST DSC:CONPresuActi LOCK
-    DPRINT "[DBG] CDSRETVAL: CDSRETVAL=[%s]\n" CDSRETVAL
 
     If ( CDSRETVAL == -801)
         // Error
     else
-    DPRINT "[DBG] post:mp_recov_order_id: post:mp_recov_order_id=[%s]\n" post:mp_recov_order_id
       CDS APPEND DSC:CONPresuActi post:mp_recov_order_id
       CDS UPDATE DSC:CONPresuActi lock
     end if

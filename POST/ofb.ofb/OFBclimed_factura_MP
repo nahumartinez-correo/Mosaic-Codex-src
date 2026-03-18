@@ -1,0 +1,62 @@
+/****o* Pendientes de agrupaci�n/OFB:post:OFBclimed_act_fact
+* NOMBRE
+*   OFB:post:OFBclimed_act_fact
+* DESCRIPCION
+*   Comportamiento del objeto (obligatorio)
+* ENTRADAS
+*   Par�metros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+* SALIDAS
+*   Campos modificados como resultado o returns cuyos valores sean no triviales
+* IMPACTOS
+*   Otros objetos que deber�n ser analizados al modificar el objeto actual
+* REFERENCIADO POR
+*   Objetos que llaman al objeto documentado (obligatorio)
+* DOCUMENTACION
+*   Documentaci�n relevante que deber� ser actualizada por la modificaci�n de la rutina
+* SOURCE
+*/
+#include "postofb.ofb.h"
+
+SUB post:OFBclimed_factura_MP
+
+	LOCAL loc_msg1 LIKE lib:stat_message
+
+	giros:codigo_procesamiento = 500010
+	giros:hora_viaje = common:time_of_day
+	giros:dia_viaje  = common:system_date
+	CALL post:CDSobtiene_secuen("STAN")
+
+	hcomm:INDhost_sndrt = OFB:SENDfactura_mp
+	hcomm:INDhost_rcvrt = OFB:RCVEconsulta_mp
+	CALL hcomm:COMM_stat_init
+
+	CALL giros:OFBdisable_bt_msg
+	post:cm_msg_update = 1
+
+	loc_msg1 = "Enviando Consulta."
+	lib:stat_msg_line = loc_msg1
+	REFRESH lib:stat_msg_line
+
+	CALL hcomm:COMM_host_tran
+
+	CLEARFIELD post:cm_msg_update
+	common:trap_reset = OFB:drv:KEYSreset_esc
+	CALL giros:OFBenable_bt_msg
+	CLEARFIELD lib:stat_message
+	CLEARFIELD lib:stat_msg_line
+	REFRESH lib:stat_message
+	REFRESH statusline
+	REFRESH lib:stat_msg_line
+
+	IF (hcomm:tran_status != HOST_ACCEPTED) THEN
+		IF (hcomm:tran_status == HOST_REJECTED) THEN
+			RETURN 1
+		END IF
+		RETURN -2
+	END IF
+
+	RETURN 0
+
+END SUB
+
+/*******/

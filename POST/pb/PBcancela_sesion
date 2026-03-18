@@ -22,6 +22,7 @@
 SUB post:PBcancela_sesion
 	LOCAL l_msje LIKE common:csr_string
 
+	// Se valida si existe el bloqueo por orden viva "at_terminal" en el point
 	CALL post:MISCvalBloqATerm
 	IF (RETVAL == 1) THEN
 		RETURN 0

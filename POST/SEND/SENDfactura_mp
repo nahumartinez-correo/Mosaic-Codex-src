@@ -1,0 +1,80 @@
+/****o* Mercado Pago/OFB:post:SENDconsulta_mp
+* NOMBRE
+*   OFB:post:SENDconsulta_mp
+* DESCRIPCION
+*   Rutina que setea los bits de envío de mensajes de Web Services Mercado Pago
+* ENTRADAS
+*   Parámetros de entrada de la rutina, sean argumentos o campos que tiene en cuenta
+* SALIDAS
+*   Campos modificados como resultado o returns cuyos valores sean no triviales
+* IMPACTOS
+*   Otros objetos que deberán ser analizados al modificar el objeto actual
+* REFERENCIADO POR
+*   OFB:post:OFBconsume_ws_mp
+* DOCUMENTACION
+*   NI50546 - Mercado Pago
+* SOURCE
+*/
+#include "postSEND.h"
+
+SUB post:SENDfactura_mp
+	LOCAL fechahora LIKE common:csr_string
+	LOCAL auxiliar LIKE common:csr_string
+	LOCAL l_Usuario LIKE op:NTUserName
+
+	CALL post:OFBclear_fldsMsg_mp
+
+	CALL post:MISCseteobit_mp(1,"")
+	
+		CALL post:MISCseteobit_mp(2,0x15)
+
+	CALL post:MISCseteobit_mp(3,giros:codigo_procesamiento)
+
+	FPRINT fechahora,"%02.2s%02.2s%6.6s",\
+	SUBSTR(giros:dia_viaje,4,2),SUBSTR(giros:dia_viaje,6,2),giros:hora_viaje
+	CALL post:MISCseteobit_mp(7,fechahora)
+
+	FPRINT auxiliar,"%06.6s",SUBSTR(post:adt_codseq_nro,0,6)
+	CALL post:MISCseteobit_mp(11,auxiliar)
+	
+	FPRINT auxiliar,"%6.6s",giros:hora_viaje
+	CALL post:MISCseteobit_mp(12,auxiliar)
+	
+	FPRINT auxiliar,"%02.2s%02.2s",\
+		SUBSTR(giros:dia_viaje,4,2),SUBSTR(giros:dia_viaje,6,2)
+	CALL post:MISCseteobit_mp(13,auxiliar)
+
+	CALL post:MISCseteobit_mp(24,"")
+	CALL post:MISCseteobit_mp(41,"")
+	CALL post:MISCseteobit_mp(60,"")
+
+  /* Bit 107 - factura */
+  FPRINT post:BulkFld_107,"%-15.15s", post:NroFact_Inic
+  DPRINT "[SENDfactura_mp] 107 factura=[%s]\n" post:BulkFld_107
+  CALL post:MISCseteobit_mp(107,post:BulkFld_107)
+  FPRINT post:BulkFld_107,"%-15.15s", post:NroFact_Inic
+
+	/* Bit 108 - formato original */
+	CALL op:MISCobtengo_UserName
+	l_Usuario = op:NTUserName
+	FPRINT post:BulkFld_108, "%5.5s%2.2s%-14.14s", common:sucursal_activa,"2",l_Usuario
+	DPRINT "[SENDfactura_mp] 108 viejo=[%s]\n" post:BulkFld_108
+	CALL post:MISCseteobit_mp(108,post:BulkFld_108)
+	FPRINT post:BulkFld_108, "%5.5s%2.2s%-14.14s", common:sucursal_activa,"2",l_Usuario
+
+  /* Bit 109 - orderId */
+  FPRINT post:BulkFld_109,"%-32.32s", post:mp_recov_order_id
+  DPRINT "[SENDfactura_mp] 109 orderId=[%s]\n" post:BulkFld_109
+  CALL post:MISCseteobit_mp(109,post:BulkFld_109)
+  FPRINT post:BulkFld_109,"%-32.32s", post:mp_recov_order_id
+
+	CALL post:MISCarma_firma_mp
+	CALL giros:MISCfirma
+	giros:firma_enviada = common:csr_string_171
+	CALL post:MISCseteobit_mp(117,common:csr_string_171)
+
+	CALL post:SENDhdr_mp
+
+END SUB
+
+/*******/
